@@ -1,0 +1,30 @@
+{
+  "name": "2scenes_vite",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "gallery.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "three-mesh-bvh": "^0.8.3",
+    "vite": "^5.4.11",
+    "vite-plugin-static-copy": "^2.1.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.21.5",
+    "nanoid": "^3.3.7",
+    "picocolors": "^1.1.1",
+    "postcss": "^8.4.49",
+    "rollup": "^4.27.2",
+    "source-map-js": "^1.2.1",
+    "three": "^0.170.0"
+  },
+  "description": ""
+}

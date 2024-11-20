@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DotGothic16&display=swap");
+
+    html,
+    body {
+      font-family: "DotGothic16", sans-serif;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #overlay {
+      position: absolute;
+      z-index: 2;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 1);
+    }
+
+    #overlay p {
+      font-size: 2em;
+      color: #27588d;
+    }
+
+    #overlay img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+  <link rel="preload" href="main.css" as="style" onload="this.rel='stylesheet'" />
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/animLogo_BluePointArt/BluePointArtLOGO_180x180.gif">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/animLogo_BluePointArt/BluePointArtLOGO_32x32.gif">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/animLogo_BluePointArt/BluePointArtLOGO_16x16.gif">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <meta name="description" content="Blue Point Art Project playground. We are building our little metaverse." />
+  <meta name="keywords" content="web art 3D installation, threejs, interactive, webgl" />
+  <meta property="og:title" content="Blue Point Art Project playground. We are building our little metaverse." />
+  <meta property="og:description" content="Blue Point Art Project playground. We are building our little metaverse." />
+  <meta property="og:url" content="https://bluepointart.uk" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image"
+    content="https://uploads.codesandbox.io/uploads/user/82eca14e-fd2e-4c88-9d0d-453a957b751d/JO2v-BluePointGallerySmall.gif" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@DystopiaofI" />
+  <meta name="twitter:description" content="Blue Point Art Project playground. We are building our little metaverse." />
+  <meta name="twitter:image"
+    content="https://uploads.codesandbox.io/uploads/user/82eca14e-fd2e-4c88-9d0d-453a957b751d/JO2v-BluePointGallerySmall.gif" />
+
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+  <title>Blue Point Art ARCHIVE Project (EXPERIMENTAL)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+</head>
+
+<body oncontextmenu="return false;">
+  <!-- This is the loader -->
+  <div id="loader"></div>
+
+  <div id="overlay">
+    <p>archive of</p>
+    <img id="myszkin" alt="Dyrektor_Myszkin" src="./textures/MyszkinBLUEPOINTART.png" />
+    <p id="loading"></p>
+  </div>
+
+  <div id="info"></div>
+
+  <div id="joystickContainer">
+    <canvas id="joystickCanvas" width="100" height="100"></canvas>
+  </div>
+
+
+  <img id="audio-on" alt="PLAY/STOP AUDIO" src="/icons/audioMuted.png" />
+  <div id="experimental">***EXPERIMENTAL PROJECT beta v2 *** 3d interface focused on showing an archived ARTWORKS not on
+    realistic representation of the gallery rooms.
+    last update 16.11: migration to vite, models have .ktx textures ***</div>
+
+    <div id="loading">
+      <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Upside-down Triangle -->
+        <polygon points="50,90 10,20 90,20" stroke="black" stroke-width="9" fill="none" />
+        <!-- Dot moving along triangular path -->
+        <circle r="7" fill="#3498db">
+          <animateMotion dur="3s" repeatCount="indefinite">
+            <mpath xlink:href="#triangle-path" />
+          </animateMotion>
+        </circle>
+        <!-- Define the triangular path -->
+        <path id="triangle-path" d="M50,28 L58,60 L33,45 Z" fill="none" />
+      </svg>
+      <p id="progress-text">Loading: 0%</p>
+    </div>
+    
+    
+    
+
+  <!--SIDEBAR-->
+  <div class="sidebar">
+    <div class="logo-details">
+      <div class="logo_name" style="padding: 10px">
+        Blue Point Art Archive
+      </div>
+      <p id="btn">>>></p>
+    </div>
+    <ul class="nav-list">
+      <li>
+        <a href="#" id="info-icon" data-divid="info_text_in_sidebar">
+          <span class="links_name"><img alt="HOW TO MOVE AROUND" src="/icons/info.png" /> Info</span>
+        </a>
+      </li>
+
+      <!--
+
+         <li>
+        <a href="#" id="play-icon">
+          <span class="links_name">
+            <img alt="PLAY/STOP AUDIO" src="/icons/audioMuted.png" />
+            Audio</span>
+        </a>
+      </li>
+
+      -->
+
+      <li>
+        <a href="#" id="map-icon" data-divid="map_in_sidebar">
+          <span class="links_name">
+            <img alt="PUBLICATIONS" src="icons/galleryLogoButton.png" />
+            Map of the Archive
+          </span>
+        </a>
+      </li>
+
+      <li class="text_in_sidebar">
+        <div class="info_sidebar" id="info_text_in_sidebar">
+          <span class="info_text">
+            Thanks for your visit to our site! What you are seeing is our very own 'Metaverse', designed to serve as a
+            state-of-the-art digital archive for a wide portfolio of projects. This immersive 3D archive allows visitors
+            to explore our past and current exhibitions. It is an innovative space that incorporates interactive
+            elements and allows users to engage with digital art, research materials and multimedia content in a new and
+            exciting way. By creating this archive, the BPA aims to increase the accessibility and sustainability of its
+            artistic and research activities, promote global collaboration and enrich the digital humanities.</br> The
+            Archive is best viewed on a large screen (desktop computer, laptop). The interior of the gallery can be
+            navigated in a number of ways: with the mouse, the joystick in the bottom left-hand corner of the screen,
+            the arrow or WASD keys, or by double-clicking on the floor and following the blue-yellow icon indicating the
+            direction. You can rotate inwards by holding down the left mouse button and moving the mouse. Double click
+            on the selected image (object) to zoom in, single click again to close the window. You can also click on the
+            name of exhibit on the "Map of the Archive" to be transfer straight to it. We hope you enjoy your visit.
+          </span>
+        </div>
+        <div class="info_sidebar" id="books_text_in_sidebar">
+          <div class="books_text">
+            <ul>
+              <!-- .pdf LOCKDOWNS -->
+              <li>
+                <a href="https://storage.bluepointart.uk/54c212c3-61ec-458b-aff6-d56851b32e8e-bucket/LockdownsJCiechanowskaFreeBook.pdf"
+                  target="_blank">
+                  <img alt="Joanna Ciechanowska - Lockdowns" src="textures/lockdowns/towardsRediscovery.jpg" />
+                  <span class="links_name">
+                    J. Ciechanowska "Lockdowns"
+                  </span>
+                </a>
+              </li>
+              <!-- WAKEUP CALL -->
+              <li>
+                <a href="https://depot.ceon.pl/handle/123456789/20776" target="_blank">
+                  <img alt="J. Gorzkowicz - WakeUp Call" src="textures/wakeupcall/WakeUpCall_ebook.png" />
+                  <span class="links_name">J. Gorzkowicz "WakeUp Call"</span>
+                </a>
+              </li>
+              <!-- Dystopia z zenodo -->
+              <li>
+                <a href="https://zenodo.org/records/6633680" target="_blank">
+                  <img alt="J. Solecki, J. Gorzkowicz - Dystopia imitacji"
+                    src="textures/dystopia/dystopiaImitacjiBooklet.jpg" />
+                  <span class="links_name">
+                    J. Solecki "Dystopia imitacji"
+                  </span>
+                </a>
+              </li>
+              <!-- NORWID SZKICE -->
+              <li>
+                <a href="https://storage.bluepointart.uk/54c212c3-61ec-458b-aff6-d56851b32e8e-bucket/KatalogNORWID_Pamie%CC%A8c%CC%81Rysunku.pdf"
+                  target="_blank">
+                  <img alt="J. Gorzkowicz - Norwid - Szkice"
+                    src="https://storage.bluepointart.uk/54c212c3-61ec-458b-aff6-d56851b32e8e-bucket/KatalogNORWID_Pamie%CC%A8c%CC%81Rysunku.png" />
+                  <span class="links_name">J. Gorzkowicz "Norwid - Pamięć Rysunku"</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="info_sidebar" id="map_in_sidebar">
+          <span class="archive_map"> </span>
+        </div>
+      </li>
+      <li>
+        <br />
+        <br />
+        <a href="#" id="books-icon" data-divid="books_text_in_sidebar">
+          <span class="links_name">
+            <img alt="PUBLICATIONS" src="icons/galleryLogoButton.png" />
+            Publications
+          </span>
+        </a>
+      </li>
+      <li>
+
+        <a href="#" id="bpa-icon">
+          <span class="links_name">
+            <img alt="BLUE POINT ART WEBSITE" src="icons/galleryLogoButton.png" />
+            Blue Point Art Website
+          </span>
+        </a>
+      </li>
+    </ul>
+  </div>
+  <video id="videoUnreal" loop crossorigin="anonymous" playsinline style="display: none">
+    <source src="/textures/identity/video/UnrealPlaces.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
+  </video>
+  <video id="heritage" loop crossorigin="anonymous" playsinline style="display: none">
+    <source src="/textures/identity/video/MurzynHeritage.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
+  </video>
+  <script type="importmap">
+      {
+        "imports": {
+          "three": "../jsm/build/three.module.min.js",
+          "three/addons/": "../jsm/",
+          "three/loaders/": "../jsm/loaders/",
+          "three/draco": "../jsm/libs/draco"
+        }
+      }
+    </script>
+  <script type="module" src="./gallery.js"></script>
+</body>
+
+</html>
