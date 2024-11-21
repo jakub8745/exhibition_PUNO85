@@ -416,10 +416,9 @@ function init() {
     // renderTransitionPass.enabled = false;
     //dotScreenPass.enabled = true;
 
-    const loadingElement = document.getElementById('loading'); // Spinner container
+   // const loadingElement = document.getElementById('loading'); // Spinner container
     //const progressText = document.getElementById('progress-text'); // Progress percentage text
-
-    loadingElement.style.display = 'none';
+  
 
     animate();
   }
@@ -428,7 +427,9 @@ function init() {
 
   preloadTextures();
 
+  const loadingElement = document.getElementById('loading'); // Spinner container
 
+    loadingElement.style.display = 'none';
   // events
   document
     .querySelector("img#audio-on")
@@ -731,15 +732,8 @@ async function updateVisitor(collider, delta) {
 
       disposeSceneObjects(visitor.exhibitScene);
 
-      //console.log("ambietLight", ambientLight);
-
 
       visitor.moveToScene(visitor.mainScene, () => {
-
-        //dotScreenPassMain.enabled = true;
-        //renderTransitionPass.enabled = true;re
-
-        //startTransitionTween(visitor.mainScene);
 
       });
 
@@ -748,13 +742,9 @@ async function updateVisitor(collider, delta) {
 
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
-
-
       visitor.exhibitScene.add(new AmbientLight(0x404040, 45));
 
       async function loadScene() {
-
-
 
         const mainCollider = await modelLoader.loadModel(exhibitModelPath);
 
@@ -764,8 +754,6 @@ async function updateVisitor(collider, delta) {
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
 
-        //dotScreenPassMain.enabled = true;
-        //renderTransitionPass.enabled = true;
 
         animate();
       }

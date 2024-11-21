@@ -38,11 +38,15 @@ class ModelLoader {
 
     async loadModel(modelPath) {
         const loadingElement = document.getElementById('loading'); // Spinner container
-        const progressText = document.getElementById('progress-text'); // Progress percentage text
+
+        console.log("loadingElement", loadingElement);
+
+        const progressText = document.getElementById('progress-text');
+        loadingElement.style.display = 'flex';
+        // Progress percentage text
 
         try {
             // Show the spinner
-            loadingElement.style.display = 'flex';
 
             this.gltfLoader.setDRACOLoader(this.dracoLoader);
             this.gltfLoader.setKTX2Loader(this.ktx2Loader);
@@ -53,9 +57,17 @@ class ModelLoader {
 
             // Add progress listener
             const onProgress = (xhr) => {
+
                 if (xhr.total) {
                     const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
                     progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
+
+                    console.log("xhr", xhr.loaded, xhr.total, percentComplete);
+                    if (xhr.loaded === xhr.total) {
+                        console.log("100%");
+                        loadingElement.style.display = 'none';
+
+                    }
                 }
             };
 
@@ -154,14 +166,13 @@ class ModelLoader {
             this.addToSceneMapRun = true;
 
             // Hide the spinner
-            loadingElement.style.display = 'none';
+            // loadingElement.style.display = 'none';
 
             return this.collider;
         } catch (error) {
             console.error('Error loading model:', error);
 
             // Hide the spinner on error
-            loadingElement.style.display = 'none';
 
             throw error;
         }
