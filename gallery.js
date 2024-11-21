@@ -377,7 +377,7 @@ function init() {
   scene.name = "mainScene";
   scene.fog = new Fog(0x2b0a07, 3.1, 18);
 
-  const ambientLight = new AmbientLight(0x404040, 25);
+  const ambientLight = new AmbientLight(0xFFF9E3, 5);
   scene.add(ambientLight);
 
   scene.add(visitor)
@@ -389,41 +389,13 @@ function init() {
   addVisitorMapCircle();
 
   // composer
-  /*
-    const renderTargetMain = new WebGLRenderTarget(window.innerWidth, window.innerHeight);
-    const renderTargetExhibit = new WebGLRenderTarget(window.innerWidth, window.innerHeight);
-  
-    mainComposer = new EffectComposer(renderer, renderTargetMain);
-  
-    renderPassMain = new RenderPass(visitor.mainScene, camera);
-    mainComposer.addPass(renderPassMain);
-  
-    dotScreenPassMain = new ShaderPass(DotScreenShader);
-    dotScreenPassMain.uniforms['scale'].value = 4.0; // Adjust the scale for the dot effect
-    mainComposer.addPass(dotScreenPassMain);
-  
-    exhibitComposer = new EffectComposer(renderer, renderTargetExhibit);
-  
-    renderPassExhibit = new RenderPass(visitor.exhibitScene, camera);
-    exhibitComposer.addPass(renderPassExhibit);
-  
-    transitionComposer = new EffectComposer(renderer);
-  
-    renderTransitionPass = new RenderTransitionPass();
-    renderTransitionPass.setScenes(renderTargetMain.texture, renderTargetExhibit.texture);
-    renderTransitionPass.setTextureThreshold(0); // Start with the main scene fully visible
-    transitionComposer.addPass(renderTransitionPass);
-  
-    // Optional: Load a texture for the transition
-    const textureLoader = new TextureLoader();
-    textureLoader.load('textures/transition5.png', (texture) => {
-      renderTransitionPass.setTransitionTexture(texture);
-    });
-  
-    // Add an output pass for final rendering
-    const outputPass = new OutputPass();
-    transitionComposer.addPass(outputPass);
-  */
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  const effect1 = new ShaderPass(DotScreenShader);
+  effect1.uniforms['scale'].value = 10;
+  composer.addPass(effect1);
+
 
   // LOAD MODEL (environment, collider)
 
@@ -759,6 +731,9 @@ async function updateVisitor(collider, delta) {
 
       disposeSceneObjects(visitor.exhibitScene);
 
+      //console.log("ambietLight", ambientLight);
+
+
       visitor.moveToScene(visitor.mainScene, () => {
 
         //dotScreenPassMain.enabled = true;
@@ -995,11 +970,16 @@ function animate() {
     }
   }
 
-   if (!visitor.parent) return;
+  if (!visitor.parent) return;
 
+  if (visitor.parent === visitor.mainScene) {
+    composer.render();
 
+  } else {
+    renderer.render(visitor.parent, camera);
 
-  renderer.render(visitor.parent, camera);  
+  }
+
 
 
   controls.update();
