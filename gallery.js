@@ -15,17 +15,12 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-//import RenderTransitionPass from './src/RenderTransitionPass.js';///three/addons/postprocessing/RenderTransitionPass.js
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-
-
 import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js'
 
 import ModelLoader from './src/ModelLoader.js'
+import { disposeSceneObjects, AudioHandler } from './src/utils.js';
 
-
-import Visitor from './src/Visitor.js'////
-
+import Visitor from './src/Visitor.js'
 import JoyStick from './src/Joystick.js';
 
 import Stats from "three/addons/libs/stats.module.js";
@@ -36,8 +31,6 @@ import {
   disposeBoundsTree,
   computeBoundsTree,
 } from 'three-mesh-bvh';
-
-//import { acceleratedRaycast, disposeBoundsTree, computeBoundsTree } from 'https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.8.3/build/index.module.js';
 
 
 import TWEEN from 'three/addons/libs/tween.module.js';
@@ -75,17 +68,15 @@ let ileE = 2,
 const listener = new AudioListener();
 
 const sceneRegistry = {
-  //mainScene: new Scene(),
-  //exhibitScene: new Scene(),
   sceneMap: new Scene(),
 };
 
 const textureFolder = "/textures/";
-const textureCache = new Map();
+let textureCache = {};
 
 let renderer, camera, scene, clock, tween, stats, anisotropy;
-let composer, transitioning, mainComposer, exhibitComposer, transitionComposer, renderPass, outputPass, dotScreenPass, dotScreenPassMain, renderTransitionPass, renderPassMain, renderPassExhibit, transitionTween;
-let rendererMap, cameraMap, circleMap, sceneMap, css2DRenderer, exhibitScene;
+let composer, renderTransitionPass
+let rendererMap, cameraMap, circleMap, sceneMap, css2DRenderer
 const cameraDirection = new Vector3();
 
 const ktx2Loader = new KTX2Loader()
@@ -94,7 +85,7 @@ let collider, visitor, controls, control;
 let circle, circleYellow, circleBlue
 let environment = new Group();
 
-let MapAnimationId = null; // defined in outer scope
+let MapAnimationId = null;
 let animationId = null;
 
 const raycaster = new Raycaster();
@@ -313,8 +304,6 @@ function init() {
   document.body.appendChild(stats.dom);
 
 
-
-
   const resetVisitor = () => {
 
     visitor.visitorVelocity.set(0, 0, 0)
@@ -352,20 +341,14 @@ function init() {
     gui,
     lightsToTurn,
     mainScene: scene,
-    //exhibitScene: visitor.exhibitScene,
-    //isVisitorOnMainScene: true,
     sceneMap,
     loader,
     listener,
     audioObjects,
-    //sphereSize: params.sphereSize,
     visitor,
     visitorEnter,
     TWEEN,
     anisotropy,
-    //composer,
-    mainComposer,
-    exhibitComposer,
     animationId,
     resetVisitor: resetVisitor,
     mainSceneY: undefined,
@@ -384,7 +367,6 @@ function init() {
 
   visitor.mainScene = scene; // Copy the main scene to the visitor scene;
 
-
   //
   addVisitorMapCircle();
 
@@ -399,37 +381,36 @@ function init() {
 
   // LOAD MODEL (environment, collider)
 
-
   const modelLoader = new ModelLoader(deps, visitor.parent);
 
   async function loadMainScene() {
+    const scene = visitor.parent;
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
 
     deps.params.exhibitCollider = mainCollider;
-    deps.bgTexture = "textures/galaktyka.ktx2";
-    deps.bgInt = 1;
-    deps.bgBlur = 0;
 
-    handleSceneBackground(deps);
+    ktx2Loader.load("/textures/galaktyka.ktx2", (texture) => {
+ 
+      texture.mapping = EquirectangularReflectionMapping;
+      texture.colorSpace = SRGBColorSpace;
 
-    // renderTransitionPass.enabled = false;
-    //dotScreenPass.enabled = true;
+      scene.background = texture;
+      scene.backgroundIntensity = 1;
+      scene.backgroundBlurriness = 0;
 
-   // const loadingElement = document.getElementById('loading'); // Spinner container
-    //const progressText = document.getElementById('progress-text'); // Progress percentage text
-  
+    });
 
     animate();
   }
 
   loadMainScene();
 
-  preloadTextures();
+  textureCache = preloadTextures();
 
   const loadingElement = document.getElementById('loading'); // Spinner container
 
-    loadingElement.style.display = 'none';
+  loadingElement.style.display = 'none';
   // events
   document
     .querySelector("img#audio-on")
@@ -513,8 +494,6 @@ function init() {
             visitor.position.copy(visitorPos);
             visitor.updateMatrixWorld();
 
-            // because of event change on controls
-            //renderer.render(scene, camera);
           });
         tween.start(); // Start the tween immediately
 
@@ -714,6 +693,39 @@ function init() {
 //
 // update visitor
 
+function handleSceneBackground(deps) {
+  const { bgTexture, bgBlur, bgInt } = deps;
+  
+  let cachedTexture = textureCache[bgTexture]
+  
+  
+  const scene = visitor.parent;
+
+  return new Promise((resolve, reject) => {
+    if (!cachedTexture) {
+      cachedTexture = textureCache["/textures/bg_color.ktx2"];
+    }
+
+    if (cachedTexture) {
+ 
+      cachedTexture.mapping = EquirectangularReflectionMapping;
+      cachedTexture.colorSpace = SRGBColorSpace;
+
+      // Set the scene background
+      scene.background = cachedTexture;
+      scene.backgroundIntensity = bgInt;
+      scene.backgroundBlurriness = bgBlur;
+
+      resolve(cachedTexture); // Resolve with the cached texture
+
+    } else {
+
+      console.error(`Texture not found in cache for: ${bgTexture}`);
+      reject(new Error(`Texture not found in cache for: ${bgTexture}`));
+    }
+  });
+}
+
 
 async function updateVisitor(collider, delta) {
 
@@ -721,24 +733,16 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
-
-
     const newFloor = result.newFloor;
     let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
-    console.log("newFloor: ", newFloor, visitor.parent);
-
     if (newFloor.name === "FloorOut") {
 
-      disposeSceneObjects(visitor.exhibitScene);
-
-
       visitor.moveToScene(visitor.mainScene, () => {
-
+        disposeSceneObjects(visitor.exhibitScene);
       });
 
     } else {
-
 
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
@@ -748,12 +752,10 @@ async function updateVisitor(collider, delta) {
 
         const mainCollider = await modelLoader.loadModel(exhibitModelPath);
 
-
         deps.params.exhibitCollider = mainCollider;
-        deps.bgTexture = `/textures/${newFloor.userData.bgTexture || "public/textures/bg_color.ktx2"}`;
+        deps.bgTexture = newFloor.userData.bgTexture || "public/textures/bg_color.ktx2";
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
-
 
         animate();
       }
@@ -761,38 +763,11 @@ async function updateVisitor(collider, delta) {
       await loadScene();
       //
       visitor.moveToScene(visitor.exhibitScene)
-      //handleSceneBackground(deps);
 
-      //visitor.currentScene = reverse ? visitor.mainScene : visitor.exhibitScene;
-      //
-      //startTransitionTween(visitor.exhibitScene, true);
+      await handleSceneBackground(deps);
 
     }
-
-    function startTransitionTween(scene, reverse) {
-      const startValue = reverse ? 0 : 1;
-      const endValue = reverse ? 1 : 0;
-
-      params.transition = startValue;
-
-      new TWEEN.Tween(params)
-        .to({ transition: endValue }, 3000) // 1-second transition
-        .onUpdate(() => {
-          renderTransitionPass.setTextureThreshold(params.transition);
-        })
-        .onComplete(() => {
-          transitioning = false; // End the transition
-
-          visitor.moveToScene(scene);
-          handleSceneBackground(deps);
-
-          visitor.currentScene = reverse ? visitor.mainScene : visitor.exhibitScene;
-        })
-        .start();
-
-      transitioning = true; // Begin the transition
-    }
-
+    ///////////
 
     cancelAnimationFrame(deps.animationId);
 
@@ -804,127 +779,8 @@ async function updateVisitor(collider, delta) {
 
 
 }
-//
-function handleAudio(intersectedFloor, audioHandler) {
-  if (intersectedFloor.userData.audioToPlay) {
-    audioHandler.handleAudio(null);
-
-    const audioOn = document.querySelector("#audio-on");
-    audioOn.style.display = "block";
-    audioOn.classList.add("flash");
-
-    const animationEndListener = () => {
-      audioOn.classList.remove("flash");
-      audioOn.removeEventListener("animationend", animationEndListener);
-    };
-
-    audioOn.addEventListener("animationend", animationEndListener);
-
-    for (const el of audioObjects) {
-      if (el.children[0].name === intersectedFloor.userData.audioToPlay) {
-        audioHandler.handleAudio(el.children[0]);
-      }
-    }
-  } else {
-    audioHandler.handleAudio(null);
-  }
-}
-
-function handleLights(lightsToTurn, lightsToTurnValue) {
-  for (const el of lightsToTurn) {
-    el.visible = el.userData.name === lightsToTurnValue;
-
-  }
-}
-
-function handleVideos(scene, belongsTo) {
-  scene.traverse(c => {
-    if (c.userData.type === "Video") {
-      const belongsToArray = Array.isArray(belongsTo) ? belongsTo : [belongsTo];
-      const cBelongsToArray = Array.isArray(c.userData.belongsTo) ? c.userData.belongsTo : [c.userData.belongsTo];
-
-      const belongsToCurrentExhibit = cBelongsToArray.some(exhibit => belongsToArray.includes(exhibit));
-
-      if (belongsToCurrentExhibit) {
-        if (c.userData.elementID) {
-          const video = document.getElementById(c.userData.elementID);
-          video.play();
-        } else {
-          const allVideos = document.getElementsByTagName("video");
-          for (let i = 0; i < allVideos.length; i++) {
-            allVideos[i].pause();
-          }
-        }
-      }
-    }
-  });
-}
 
 
-
-function handleSceneBackground(deps) {
-
-  const { bgTexture, bgBlur, bgInt } = deps;
-
-  let scene = visitor.parent;
-  const extension = bgTexture.split('.').pop();
-
-
-  if (extension === 'ktx2') {
-
-    console.log("ktx2", bgTexture);
-
-    ktx2Loader.load(bgTexture, (texture) => {
-
-      texture.mapping = EquirectangularReflectionMapping;
-      texture.colorSpace = SRGBColorSpace;
-
-      scene.background = texture;  // Set the background texture
-      scene.backgroundIntensity = bgInt;
-      scene.backgroundBlurriness = bgBlur;
-
-    }, undefined, (error) => {
-      console.error('Error loading KTX2 texture:', error);
-    });
-  } else {
-    // Handle loading standard texture formats like jpg or png
-    loader.load(bgTexture, (texture) => {
-
-      texture.mapping = EquirectangularReflectionMapping;
-      texture.colorSpace = SRGBColorSpace;
-
-      scene.background = texture;  // Set the background texture
-      scene.backgroundIntensity = bgInt;
-      scene.backgroundBlurriness = bgBlur;
-
-    }, undefined, (error) => {
-      console.error('Error loading texture:', error);
-    });
-  }
-}
-
-function disposeSceneObjects(scene) {
-  scene.traverse((object) => {
-    if (object.isMesh) {
-      object.geometry.dispose();
-      object.material.dispose();
-    } else if (object.isLight) {
-      object.dispose();
-    } else if (object.isBone) {
-      object.dispose();
-    } else if (object.isSkinnedMesh) {
-      object.dispose();
-    }
-  });
-
-  // Remove all children from the scene
-  while (scene.children.length > 0) {
-    scene.remove(scene.children[0]);
-  }
-
-}
-
-//
 
 function animateMap() {
   MapAnimationId = requestAnimationFrame(animateMap);
@@ -968,22 +824,13 @@ function animate() {
 
   }
 
-
-
   controls.update();
   deps.animationId = requestAnimationFrame(animate);
 }
 
 
 
-
-////
-
-
 function addVisitorMapCircle() {
-
-
-
 
   // visitor Map
   circleMap = new Mesh(
@@ -1041,83 +888,37 @@ function addVisitorMapCircle() {
 
 //
 
-function ileElementow() {
-  ileE++;
-  if (ileRazy < 1 && ileE <= ileMesh) {
-    const progress = Math.round((ileE / ileMesh) * 100);
-    document.getElementById("loading").textContent = progress + "% loaded";
-    if (progress === 100) {
-      ileRazy++;
-      fadeOutEl(document.getElementById("overlay"));
-    }
-  }
-}
 
 //
 function preloadTextures() {
+  ktx2Loader.setTranscoderPath('./libs/basis/');
+  ktx2Loader.detectSupport(renderer);
 
-  ktx2Loader.setTranscoderPath('./libs/basis/')
-  ktx2Loader.detectSupport(renderer)
+  // Cache to store textures
+  const textureFiles = [
+    'bg_color.ktx2',
+    'galaktyka.ktx2',
+    'equMap_podMostem.ktx2',
+    'bg_white.ktx2',
+    'bg_lockdowns.ktx2',
+    'dystopia/bgVermeerViewofDelft.ktx2'
+  ];
 
-  const textureFiles = ['bg_color.ktx2', 'galaktyka.ktx2', 'equMap_podMostem.ktx2', 'bg_white.ktx2', 'bg_lockdowns.ktx2', 'dystopia/bgVermeerViewofDelft.ktx2']; // Add all texture filenames here
-
-
+  // Iterate over the texture files and load each one
   textureFiles.forEach((textureFile) => {
-
     const textureUrl = textureFolder + textureFile;
 
     ktx2Loader.load(textureUrl, (texture) => {
-
+      // Configure the texture and add it to the cache
       texture.mapping = EquirectangularReflectionMapping;
       texture.colorSpace = SRGBColorSpace;
 
-      textureCache.set(textureUrl, texture);
+      // Store in plain object using the URL as the key
+      textureCache[textureUrl] = texture;
 
     });
   });
+
+  return textureCache; // Return the cache for further use
 }
 
-//
-class AudioHandler {
-  handleAudio(audioToTurn) {
-    const audioOn = document.querySelector("#audio-on");
-
-    if (!audioToTurn || audioToTurn.type !== "Audio") {
-      audioOn.src = "/icons/audioMuted.png";
-      audioOn.style.display = "none";
-      audioObjects.forEach(el => el.children[0].pause());
-      return;
-    }
-
-    if (audioToTurn.isPlaying) {
-      audioToTurn.stop();
-      audioOn.style.display = "block";
-      audioOn.src = "/icons/audioMuted.png";
-    } else {
-      audioToTurn.play();
-      audioOn.style.display = "block";
-      audioOn.src = "/icons/audioButton.png";
-    }
-  }
-}
-
-//
-class VisitorLocationChecker {
-  constructor(scene) {
-    this.scene = scene;
-    this.raycaster = new Raycaster();
-    this.downVector = new Vector3(0, -1, 0);
-    this.vector = new Vector3();
-    this.intersectedObjects = [];
-  }
-  checkVisitorLocation(visitor) {
-    this.raycaster.firstHitOnly = true;
-    this.raycaster.set(visitor.position, this.downVector);
-
-    return this.intersectedObjects.find(({ object }) => {
-      const type = object.userData.type;
-      return type === "visitorLocation" || type === "Room";
-    })?.object;
-
-  }
-}

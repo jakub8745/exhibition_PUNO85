@@ -1,7 +1,6 @@
 import { Font, FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
-//import FadeInMaterial from './FadeInMaterial.js';
 
 import { TextureLoader, Object3D, MeshLambertMaterial, MeshBasicMaterial, Mesh, PositionalAudio, AudioLoader, VideoTexture, RepeatWrapping, DoubleSide, FrontSide, SRGBColorSpace } from 'three';
 
