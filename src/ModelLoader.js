@@ -84,7 +84,20 @@ class ModelLoader {
         
                 if (this.newFloor.userData.exhibitObjectsPath) {
                     const { scene: exhibitObjects } = await this.gltfLoader.loadAsync(this.newFloor.userData.exhibitObjectsPath, onProgress);
+                    
+                    exhibitObjects.traverse((object) => {
+
+                        if (object.isMesh) {
+                            object.material.transparent = true;
+                            object.material.opacity = 0; // Make the material invisible
+                            object.interactive = true;  // Custom property for filtering interactive objects
+                        }
+                    });
+                    
+                    
                     gltfScene.add(exhibitObjects);
+                  
+
                 }
             }
         
@@ -153,7 +166,7 @@ class ModelLoader {
                         gizmoVisible: this.deps.params.gizmoVisible,
                         transControlsMode: this.deps.params.transControlsMode,
                     };
-                    modifyObjects[c.userData.type]?.(c, options);
+                   // modifyObjects[c.userData.type]?.(c, options);
                 }
         
                 if (this.scene.name === "mainScene" &&

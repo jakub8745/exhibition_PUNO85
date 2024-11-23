@@ -102,7 +102,7 @@ const visitorPos = new Vector3();
 let Wall,
   result,
   intersects,
-  video, image
+  video, videoEl, image
 
 let audioHandler, exhibitModelPath//, exhibitModelPath0;
 
@@ -391,7 +391,7 @@ function init() {
     deps.params.exhibitCollider = mainCollider;
 
     ktx2Loader.load("/textures/galaktyka.ktx2", (texture) => {
- 
+
       texture.mapping = EquirectangularReflectionMapping;
       texture.colorSpace = SRGBColorSpace;
 
@@ -428,23 +428,32 @@ function init() {
     pointer.x = (clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(clientY / window.innerHeight) * 2 + 1;
 
+
     raycaster.setFromCamera(pointer, camera);
     raycaster.firstHitOnly = true;
-    intersects = raycaster.intersectObjects(visitor.scene.children);
 
+
+    intersects = raycaster.intersectObjects(visitor.scene.children).filter(intersect => intersect.object.userData.type === "Image");
+    
     Wall = intersects.find(({ object }) => object.userData.name === "Wall");
 
-    result = intersects.find(({ object }) => object.userData.type === "Video");
-    if (result) {
-      video = document.getElementById(result.object.userData.elementID);
+    videoEl = intersects.find(({ object }) => object.userData.type === "Video");
+
+    if (videoEl) {
+      video = document.getElementById(videoEl.object.userData.elementID);
       video.paused ? video.play() : video.pause();
     }
 
     // checking if clicked obj needs description
-    image = intersects.find(({ object }) => object.userData.opis);
+    image = intersects.find(({ object }) => object.userData.type === "Image");
+
+   // console.log("image: ", image.object.userData.opis);
 
 
-    if (image && intersects.indexOf(image) < intersects.indexOf(Wall)) {
+    if (image){   // && intersects.indexOf(image) < intersects.indexOf(Wall)) {
+
+      console.log("image: ", image.object.userData.opis);
+
       if (!document.getElementById("viewer")) {
         const viewer = document.createElement("div");
         viewer.className = "viewer";
@@ -695,10 +704,10 @@ function init() {
 
 function handleSceneBackground(deps) {
   const { bgTexture, bgBlur, bgInt } = deps;
-  
+
   let cachedTexture = textureCache[bgTexture]
-  
-  
+
+
   const scene = visitor.parent;
 
   return new Promise((resolve, reject) => {
@@ -707,7 +716,7 @@ function handleSceneBackground(deps) {
     }
 
     if (cachedTexture) {
- 
+
       cachedTexture.mapping = EquirectangularReflectionMapping;
       cachedTexture.colorSpace = SRGBColorSpace;
 
@@ -749,6 +758,8 @@ async function updateVisitor(collider, delta) {
       visitor.exhibitScene.add(new AmbientLight(0x404040, 45));
 
       async function loadScene() {
+
+        console.log("exhibitModelPath: ", exhibitModelPath);
 
         const mainCollider = await modelLoader.loadModel(exhibitModelPath);
 
