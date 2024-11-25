@@ -433,65 +433,47 @@ function init() {
     raycaster.firstHitOnly = true;
 
 
-    intersects = raycaster.intersectObjects(visitor.scene.children).filter(intersect => intersect.object.userData.type === "Image");
-    
-    Wall = intersects.find(({ object }) => object.userData.name === "Wall");
+    intersects = raycaster.intersectObjects(visitor.scene.children)
 
-    videoEl = intersects.find(({ object }) => object.userData.type === "Video");
+    if (intersects.length > 0) {
+      const clickedObject = intersects[0].object;
 
-    if (videoEl) {
-      video = document.getElementById(videoEl.object.userData.elementID);
-      video.paused ? video.play() : video.pause();
-    }
+      if (clickedObject.userData.type === 'Image') {
 
-    // checking if clicked obj needs description
-    image = intersects.find(({ object }) => object.userData.type === "Image");
+        // Show popup with object info
+        popupImage.src = clickedObject.userData.Map;
+        popupDescription.textContent = clickedObject.userData.opis;
+        //popup.style.display = 'flex';
 
-   // console.log("image: ", image.object.userData.opis);
+        popup.classList.add('show'); // Add 'show' class to fade in
+        popup.classList.remove('hidden'); // Ensure it's not hidden
+      
 
+        console.log(clickedObject.userData.opis)
 
-    if (image){   // && intersects.indexOf(image) < intersects.indexOf(Wall)) {
+      } else if (clickedObject.userData.type === 'Video') {
 
-      console.log("image: ", image.object.userData.opis);
+        // handle video
+        video = document.getElementById(videoEl.object.userData.elementID);
+        video.paused ? video.play() : video.pause();
 
-      if (!document.getElementById("viewer")) {
-        const viewer = document.createElement("div");
-        viewer.className = "viewer";
-        viewer.id = "viewer";
-        viewer.style.animation = "fadeInViewer 2s forwards";
-        viewer.innerHTML = "</br>";
-        const viewImage = document.createElement("img");
-        viewImage.id = "image-view";
-        viewImage.src = image.object.userData.Map;
-        viewer.appendChild(viewImage);
+      } else if (clickedObject.userData.type === 'Floor') {
 
-        // text-on-screen
-        if (image.object.userData.opis) {
-          const textOnscreen = document.createElement("div");
-          textOnscreen.id = "text-on-screen";
-          viewer.appendChild(textOnscreen);
-          textOnscreen.innerText = `${image.object.userData.opis}`;
-        }
-        document.body.appendChild(viewer);
-      }
-    } else {
-      if (document.getElementById("viewer")) {
-        const el = document.getElementById("viewer");
-        fadeOutEl(el);
-      }
-    }
+        // Floor clicked - show circle
+        const { point } = intersects[0];
+        circle.position.set(point.x, point.y + 0.01, point.z);
+        circle.visible = true;
+        pulseScale = 1;
 
-    // is floor clicked?
-    result = intersects.find(
-      ({ object }) => object.userData.type === "visitorLocation"
-    );
+        if (circleTimeout) clearTimeout(circleTimeout);
 
-    if (result) {
-      const index = intersects.indexOf(result);
+        circleTimeout = setTimeout(() => {
+          if (circle.visible) circle.visible = false;
+        }, 3000);
 
-      // if clicked floor is on 1st plan
-      if (index <= 1) {
-        const { distance, point } = result;
+      } else if (clickedObject === circle) {
+
+        const { distance, point } = intersects[0];
         clickedPoint.copy(point);
         visitorPos.copy(visitor.position);
         clickedPoint.y = visitor.position.y;
@@ -516,8 +498,11 @@ function init() {
           circle.scale.copy(innerRad);
         });
         tweenCircle.start();
+        if (circleTimeout) clearTimeout(circleTimeout);
       }
     }
+
+
   };
 
 
@@ -587,29 +572,39 @@ function init() {
   // checking how many click
   const textOnScreenEl = document.getElementById("text-on-screen");
   const viewerEl = document.getElementById("viewer");
-  window.addEventListener("pointerdown", (e) => {
-    if (e.target === target) {
-      // double
-      clearTimeout(timeout);
-      target = null;
-      timeout = null;
-      onPointerDown(e);
-    } else {
-      // single
-      target = e.target;
-      timeout = setTimeout(() => {
-        target = null;
-        timeout = null;
-      }, 500);
-      if (textOnScreenEl) {
-        const el = textOnScreenEl;
-        fadeOutEl(el);
-      } else if (viewerEl) {
-        let el = viewerEl;
-        fadeOutEl(el);
-      }
-    }
+
+
+  // Popup DOM elements
+  const popup = document.querySelector('.modal-overlay');
+  const closeBtn = document.querySelector('.modal-close');
+  const popupImage = document.querySelector('.modal img');
+  const popupDescription = document.querySelector('.modal-description');
+
+  window.addEventListener("pointerdown", onPointerDown);
+
+  // Close popup
+  closeBtn.addEventListener('pointerdown', (event) => {
+    //popup.style.display = 'none';
+
+    popup.classList.remove('show'); // Fade out
+    setTimeout(() => {
+      popup.classList.add('hidden'); // Hide after animation completes
+    }, 400); 
+
+    event.stopPropagation();
   });
+
+  // Close modal when clicking outside of the modal content
+  popup.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+
+  if (e.target === modalOverlay) {
+    popup.classList.remove('show'); // Fade out
+    setTimeout(() => {
+      popup.classList.add('hidden'); // Hide after animation completes
+    }, 400); // Match the transition duration
+  }
+});
 
   window.addEventListener(
     "resize",

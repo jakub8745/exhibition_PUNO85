@@ -12,6 +12,7 @@
       padding: 0;
       margin: 0;
       overflow: hidden;
+      
     }
 
     #overlay {
@@ -92,24 +93,24 @@
     realistic representation of the gallery rooms.
     last update 16.11: migration to vite, models have .ktx textures ***</div>
 
-    <div id="loading">
-      <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <!-- Upside-down Triangle -->
-        <polygon points="50,90 10,20 90,20" stroke="black" stroke-width="9" fill="none" />
-        <!-- Dot moving along triangular path -->
-        <circle r="7" fill="#3498db">
-          <animateMotion dur="3s" repeatCount="indefinite">
-            <mpath xlink:href="#triangle-path" />
-          </animateMotion>
-        </circle>
-        <!-- Define the triangular path -->
-        <path id="triangle-path" d="M50,28 L58,60 L33,45 Z" fill="none" />
-      </svg>
-      <p id="progress-text">Loading: 0%</p>
-    </div>
-    
-    
-    
+  <div id="loading">
+    <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- Upside-down Triangle -->
+      <polygon points="50,90 10,20 90,20" stroke="black" stroke-width="9" fill="none" />
+      <!-- Dot moving along triangular path -->
+      <circle r="7" fill="#3498db">
+        <animateMotion dur="3s" repeatCount="indefinite">
+          <mpath xlink:href="#triangle-path" />
+        </animateMotion>
+      </circle>
+      <!-- Define the triangular path -->
+      <path id="triangle-path" d="M50,28 L58,60 L33,45 Z" fill="none" />
+    </svg>
+    <p id="progress-text">Loading: 0%</p>
+  </div>
+
+
+
 
   <!--SIDEBAR-->
   <div class="sidebar">
@@ -231,6 +232,22 @@
       </li>
     </ul>
   </div>
+  
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <button class="modal-close" id="closeModal">×</button>
+      <div class="modal-image-container">
+        <img src="https://via.placeholder.com/1200x800" alt="Example Image">
+      </div>
+      <div class="modal-description">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+      </div>
+    </div>
+  </div>
+  
+
+  <!-- Video -->
   <video id="videoUnreal" loop crossorigin="anonymous" playsinline style="display: none">
     <source src="/textures/identity/video/UnrealPlaces.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
   </video>

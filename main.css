@@ -23,10 +23,13 @@ a {
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }
-  0%, 100% {
+
+  0%,
+  100% {
     animation-timing-function: ease-in-out;
   }
 }
@@ -45,6 +48,7 @@ a {
   z-index: 9999;
   max-width: 95vw;
 }
+
 #loading {
   position: fixed;
   top: 50%;
@@ -141,16 +145,7 @@ a {
   }
 }
 
-@keyframes fadeInViewer {
-  from {
-    opacity: 0;
-  }
 
-  to {
-    opacity: 1;
-  }
-
-}
 
 .fade-out {
   opacity: 0;
@@ -495,7 +490,8 @@ li.text_in_sidebar.open canvas.open {
   left: 20px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.3);
-  touch-action: none; /* Disable default touch actions */
+  touch-action: none;
+  /* Disable default touch actions */
 }
 
 .stick {
@@ -506,11 +502,12 @@ li.text_in_sidebar.open canvas.open {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);  /* Initially centered */
+  transform: translate(-50%, -50%);
+  /* Initially centered */
   touch-action: none;
 }
 
-#joystickCanvas{
+#joystickCanvas {
   display: block;
 
 }
@@ -522,4 +519,99 @@ li.text_in_sidebar.open canvas.open {
   width: 100px;
   height: 100px;
   z-index: 10;
+}
+
+/* Overlay for the modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  /* Start fully transparent for animation */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 10s ease, visibility 1s ease;
+}
+
+/* Show the overlay (fade-in effect) */
+.modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+/* Modal container */
+.modal {
+  border-radius: 10px;
+  width: 90%;
+  max-width: 910px;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+  padding: 1em;
+  background: #f9f9f9;
+}
+
+/* Close button */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  background: black;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* Image container */
+.modal-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+.modal img {
+  max-width: 100%;
+  max-height: calc(100% - 120px); /* Subtracting 4 lines of text + padding */
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Description below the image */
+.modal-description {
+  padding: 15px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+  height: 120px; /* Fixed height for description area */
+  overflow-y: auto; /* Enable vertical scrolling */
+  scrollbar-width: thin; /* For modern browsers */
+}
+
+
+/* Hidden state for modal */
+.modal-overlay.hidden {
+  display: none;
 }

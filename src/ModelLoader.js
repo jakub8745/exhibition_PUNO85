@@ -93,6 +93,8 @@ class ModelLoader {
                             object.interactive = true;  // Custom property for filtering interactive objects
                         }
                     });
+
+                    // feature objects: 3Dtext, Video, Image, Audio, 3Dmodel
                     
                     
                     gltfScene.add(exhibitObjects);
