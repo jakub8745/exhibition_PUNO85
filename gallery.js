@@ -44,7 +44,7 @@ const params = {
   visualizeDepth: 10,
   gravity: -30,
   visitorSpeed: 3,
-  physicsSteps: 5,
+  //physicsSteps: 1,
   exposure: 1,
   gizmoVisible: false,
   canSeeGizmo: false,
@@ -67,9 +67,7 @@ let ileE = 2,
 //
 const listener = new AudioListener();
 
-const sceneRegistry = {
-  sceneMap: new Scene(),
-};
+
 
 const textureFolder = "/textures/";
 let textureCache = {};
@@ -82,7 +80,7 @@ const cameraDirection = new Vector3();
 const ktx2Loader = new KTX2Loader()
 
 let collider, visitor, controls, control;
-let circle, circleYellow, circleBlue
+let circle, circleYellow, circleBlue, circleTimeout, pulseScale, distance;
 let environment = new Group();
 
 let MapAnimationId = null;
@@ -261,7 +259,8 @@ function init() {
 
 
   // sceneMap
-  sceneMap = sceneRegistry["sceneMap"];
+  sceneMap = new Scene();
+  sceneMap.name = "sceneMap";
   sceneMap.scale.setScalar(25);
   sceneMap.rotation.x = Math.PI;
   sceneMap.rotation.y = Math.PI / 180;
@@ -348,7 +347,6 @@ function init() {
     ktx2Loader,
     gui,
     lightsToTurn,
-    mainScene: scene,
     sceneMap,
     loader,
     listener,
@@ -365,22 +363,22 @@ function init() {
   visitor = new Visitor(deps);
   visitor.exhibitScene.name = 'exhibitScene';
 
-  scene.name = "mainScene";
-  scene.fog = new Fog(0x2b0a07, 3.1, 18);
+  visitor.mainScene.fog = new Fog(0x2b0a07, 3.1, 18);
 
   const ambientLight = new AmbientLight(0xFFF9E3, 5);
-  scene.add(ambientLight);
+  visitor.mainScene.add(ambientLight);
 
-  scene.add(visitor)
-
-  visitor.mainScene = scene; // Copy the main scene to the visitor scene;
+  visitor.mainScene.add(visitor)
 
   //
   addVisitorMapCircle();
 
+  //visitor.mainScene.add(environment);
+
+
   // composer
   composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new RenderPass(visitor.mainScene, camera));
 
   const effect1 = new ShaderPass(DotScreenShader);
   effect1.uniforms['scale'].value = 10;
@@ -395,6 +393,8 @@ function init() {
     const scene = visitor.parent;
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
+
+    mainCollider.name = "mainCollider";
 
     deps.params.exhibitCollider = mainCollider;
 
@@ -443,80 +443,118 @@ function init() {
 
     intersects = raycaster.intersectObjects(visitor.scene.children)
 
-    console.log('intersects: ', intersects)
+    const validTypes = ['Image', 'visitorLocation', 'Video'];
+
+    const clickedObject = intersects.find(
+      (intersect) =>
+        intersect.object.userData &&
+        validTypes.includes(intersect.object.userData.type)
+    );
 
 
-    if (intersects.length > 0) {
-      //const clickedObject = intersects[0].object;
-
-      const clickedObject = intersects.find((intersect) => intersect.object.userData && intersect.object.userData.type === 'Image');
-
-      console.log(clickedObject.name, intersects[0].object.name)
-      if (!clickedObject.userData) return;
-
-      if (clickedObject && clickedObject.userData.type === 'Image') {
-
-        // Show popup with object info
-        popupImage.src = clickedObject.userData.Map;
-        popupDescription.textContent = clickedObject.userData.opis;
-        //popup.style.display = 'flex';
-
-        popup.classList.add('show'); // Add 'show' class to fade in
-        popup.classList.remove('hidden'); // Ensure it's not hidden
+    //console.log('intersects: ', intersects, 'clickedObject: ', clickedObject.object.name);
+    //const clickedObject = intersects.find((intersect) => intersect.object.userData && intersect.object.userData.type === 'Image');
 
 
-        console.log(clickedObject.userData.opis)
+    if (clickedObject && clickedObject.object.userData) {
+      //if (!clickedObject.object.userData) return;
 
-      } else if (clickedObject && clickedObject.userData.type === 'Video') {
+      switch (clickedObject.object.userData.type) {
+        case 'Image':
+          console.log("image: ", clickedObject.object.name);
 
-        // handle video
-        video = document.getElementById(videoEl.object.userData.elementID);
-        video.paused ? video.play() : video.pause();
+          // Show popup with object info
+          popupImage.src = clickedObject.object.userData.Map;
+          popupDescription.textContent = clickedObject.object.userData.opis;
 
-      } else if (clickedObject && clickedObject.userData.type === 'Floor') {
+          popup.classList.add('show'); // Add 'show' class to fade in
+          popup.classList.remove('hidden'); // Ensure it's not hidden
 
-        // Floor clicked - show circle
-        const { point } = intersects[0];
-        circle.position.set(point.x, point.y + 0.01, point.z);
-        circle.visible = true;
-        pulseScale = 1;
+          console.log(clickedObject.object.userData.opis);
+          break;
 
-        if (circleTimeout) clearTimeout(circleTimeout);
+        case 'Video':
+          console.log(clickedObject.object.userData.type);
 
-        circleTimeout = setTimeout(() => {
-          if (circle.visible) circle.visible = false;
-        }, 3000);
+          // Handle video
+          video = document.getElementById(clickedObject.object.userData.elementID);
+          video.paused ? video.play() : video.pause();
+          break;
 
-      } else if (clickedObject === circle) {
+        case 'Floor':
+        case 'visitorLocation':
 
-        const { distance, point } = intersects[0];
-        clickedPoint.copy(point);
-        visitorPos.copy(visitor.position);
-        clickedPoint.y = visitor.position.y;
+          // bug/: sommetimes visitor is detecting interir floor
 
-        // Tween
-        tween = new TWEEN.Tween(visitorPos)
-          .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
-          .onUpdate(() => {
-            visitor.position.copy(visitorPos);
-            visitor.updateMatrixWorld();
+          //console.log(clickedObject.object.userData.name);
 
-          });
-        tween.start(); // Start the tween immediately
+          const { distance, point } = clickedObject;
 
-        let innerRad = new Vector3(1, 1, 1);
-        const zero = new Vector3(0, 0, 0);
-        circle.position.copy(point);
-        circle.position.y += 0.01;
-        const tweenCircle = new TWEEN.Tween(innerRad);
-        tweenCircle.to(zero, 3000 / params.visitorSpeed);
-        tweenCircle.onUpdate(() => {
-          circle.scale.copy(innerRad);
-        });
-        tweenCircle.start();
-        if (circleTimeout) clearTimeout(circleTimeout);
+          if (!circle) addPointerCircle();
+
+          // Check if the circle is already visible and clicked
+          if (circle.visible && circle.userData.clicked) {
+
+
+            //console.log("circle.visible", circle.visible, clickedObject.object.position, circle.position, intersects);
+            // Second click: move visitor to the circle's position
+            clickedPoint.copy(point);
+            visitorPos.copy(visitor.position.clone());
+
+            clickedPoint.y = (visitor.position.clone()).y;
+
+            // Tween
+            tween = new TWEEN.Tween(visitorPos)
+              .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
+              .onUpdate(() => {
+                visitor.position.copy(visitorPos);
+                visitor.updateMatrixWorld();
+              });
+
+            tween.start(); // Start the tween immediately
+
+            let innerRad = new Vector3(1, 1, 1);
+            const zero = new Vector3(0, 0, 0);
+            circle.position.copy(point);
+            circle.position.y += 0.01;
+            const tweenCircle = new TWEEN.Tween(innerRad);
+            tweenCircle.to(zero, 3000 / params.visitorSpeed);
+            tweenCircle.onUpdate(() => {
+              circle.scale.copy(innerRad);
+            });
+            tweenCircle.start();
+
+            // Reset the circle state after the visitor moves
+            if (circleTimeout) clearTimeout(circleTimeout);
+            circle.visible = false;
+            circle.userData.clicked = false;
+          } else {
+            // First click: show circle at the clicked location
+            circle.position.set(point.x, point.y + 0.01, point.z);
+            circle.visible = true;
+            pulseScale = 1;
+            circle.userData.clicked = true; // Mark circle as clickable
+
+            if (circleTimeout) clearTimeout(circleTimeout);
+
+            // Set a timeout to hide the circle if not clicked again
+            circleTimeout = setTimeout(() => {
+              if (circle.visible) {
+                circle.visible = false;
+                circle.userData.clicked = false; // Reset clicked state
+              }
+            }, 3000);
+          }
+          break;
+
+
+        default:
+
+          break;
+
       }
     }
+
 
 
   };
@@ -750,20 +788,31 @@ function handleSceneBackground(deps) {
 
 async function updateVisitor(collider, delta) {
 
-  const result = visitor.update(delta, collider);
+
+  //console.log("updateVisitor","tween", TWEEN);
+
+  const result = visitor.update(delta, collider, TWEEN);
 
   if (result.changed) {
 
     const newFloor = result.newFloor;
+    console.log("changed", newFloor);
+
     let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
     if (newFloor.name === "FloorOut") {
 
+
       visitor.moveToScene(visitor.mainScene, () => {
         disposeSceneObjects(visitor.exhibitScene);
+        deps.params.exhibitCollider = visitor.parent.getObjectByName("mainCollider")
+
       });
 
     } else {
+
+      console.log("changed", newFloor);
+
 
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
@@ -773,9 +822,11 @@ async function updateVisitor(collider, delta) {
 
         console.log("exhibitModelPath: ", exhibitModelPath);
 
-        const mainCollider = await modelLoader.loadModel(exhibitModelPath);
+        const collider = await modelLoader.loadModel(exhibitModelPath);
 
-        deps.params.exhibitCollider = mainCollider;
+        collider.name = "exhibitCollider";
+
+        deps.params.exhibitCollider = collider;
         deps.bgTexture = newFloor.userData.bgTexture || "public/textures/bg_color.ktx2";
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
@@ -820,9 +871,11 @@ function animateMap() {
 
 //
 function animate() {
-  if (!deps.params.exhibitCollider) return;
+
+  if (!deps.params.exhibitCollider) return
 
   const collider = deps.params.exhibitCollider;
+
   stats.update();
   TWEEN.update();  // Update all tweens globally
 
@@ -830,12 +883,9 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.1);
 
   // Update visitor position and movement logic
-  if (collider && collider.geometry && collider.material) {
-    const physicsSteps = params.physicsSteps;
-    for (let i = 0; i < physicsSteps; i++) {
-      updateVisitor(collider, delta / physicsSteps);
-    }
-  }
+
+  updateVisitor(collider, delta / 1);
+
 
   if (!visitor.parent) return;
 
@@ -874,6 +924,13 @@ function addVisitorMapCircle() {
 
   sceneMap.add(circleMap);
 
+
+
+  //
+
+}
+
+function addPointerCircle() {
   /// circle (pointer)
   circle = new Group();
   circle.position.copy(visitor.position);
@@ -889,6 +946,7 @@ function addVisitorMapCircle() {
     })
   );
   circleYellow.rotation.x = (90 * Math.PI) / 180;
+  circleYellow.name = "circleYellow";
 
   circleBlue = new Mesh(
     new RingGeometry(0.12, 0.14, 32),
@@ -902,11 +960,7 @@ function addVisitorMapCircle() {
   circleBlue.rotation.x = (90 * Math.PI) / 180;
   circle.add(circleYellow);
   circle.add(circleBlue);
-  scene.add(circle);
-
-  //
-  scene.add(environment);
-
+  visitor.mainScene.add(circle);
 }
 
 //
@@ -944,4 +998,5 @@ function preloadTextures() {
 
   return textureCache; // Return the cache for further use
 }
+
 

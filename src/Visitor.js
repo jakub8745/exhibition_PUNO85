@@ -76,7 +76,7 @@ export default class Visitor extends Mesh {
   }
 
 
-  update(delta, collider) {
+  update(delta, collider, TWEEN) {
 
     // Update vertical velocity based on whether the visitor is on the ground
     if (this.visitorIsOnGround) {
@@ -113,7 +113,7 @@ export default class Visitor extends Mesh {
     this.updateMatrixWorld();
 
     // handle collisions
-    this.handleCollisions(delta, collider);
+    this.handleCollisions(delta, collider, TWEEN);
 
     //
 
@@ -165,7 +165,7 @@ export default class Visitor extends Mesh {
   }
 
 
-  handleCollisions(delta, collider) {
+  handleCollisions(delta, collider, TWEEN) {
     // adjust visitor position based on collisions
     const capsuleInfo = this.capsuleInfo;
     this.tempBox.makeEmpty();
@@ -189,6 +189,9 @@ export default class Visitor extends Mesh {
       intersectsTriangle: (tri) => {
         // check if the triangle is intersecting the capsule and adjust the
         // capsule position if it is.
+
+        const isVertical = Math.abs(this.tempVector.y) < 0.1; // Adjust threshold for "vertical"
+
         const triPoint = this.tempVector;
         const capsulePoint = this.tempVector2;
 
@@ -198,8 +201,21 @@ export default class Visitor extends Mesh {
           capsulePoint
         );
         if (distance < capsuleInfo.radius) {
+
+         if (isVertical) {
+          //console.log("Collision with a vertical element!!!", "tempVector", this.tempVector, TWEEN);
+  
+          // Stop all TWEEN animations
+          if (typeof TWEEN !== 'undefined') {
+            TWEEN.removeAll();
+            console.log("All TWEEN animations stopped due to vertical collision.");
+          }
+        }
+
           const depth = capsuleInfo.radius - distance;
           const direction = capsulePoint.sub(triPoint).normalize();
+
+          //console.log("direction: ", direction, "depth: ", depth, "distance: ", distance);
 
           this.tempSegment.start.addScaledVector(direction, depth);
           this.tempSegment.end.addScaledVector(direction, depth);
