@@ -154,13 +154,6 @@ joystick.onDirectionChange((data) => {
 
 console.log("isLowEndDevice: ", params.isLowEndDevice);
 
-if (!navigator.gpu) {
-  console.log("WebGPU is not supported on this browser.");
-} else {
-  console.log("WebGPU is supported! 🎉");
-  const adapter = await navigator.gpu.requestAdapter();
-  console.log(adapter ? "WebGPU is available!" : "WebGPU not available.");
-}
 
 //
 const waitForMe = async (millisec) => {
