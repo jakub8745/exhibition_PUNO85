@@ -156,6 +156,14 @@ joystick.onDirectionChange((data) => {
 
 console.log("isLowEndDevice: ", params.isLowEndDevice);
 
+if (!navigator.gpu) {
+  console.log("WebGPU is not supported on this browser.");
+} else {
+  console.log("WebGPU is supported! 🎉");
+  const adapter = await navigator.gpu.requestAdapter();
+  console.log(adapter ? "WebGPU is available!" : "WebGPU not available.");
+}
+
 //
 const waitForMe = async (millisec) => {
   await new Promise(resolve => requestAnimationFrame(time => resolve(time + millisec)));
@@ -435,10 +443,18 @@ function init() {
 
     intersects = raycaster.intersectObjects(visitor.scene.children)
 
-    if (intersects.length > 0) {
-      const clickedObject = intersects[0].object;
+    console.log('intersects: ', intersects)
 
-      if (clickedObject.userData.type === 'Image') {
+
+    if (intersects.length > 0) {
+      //const clickedObject = intersects[0].object;
+
+      const clickedObject = intersects.find((intersect) => intersect.object.userData && intersect.object.userData.type === 'Image');
+
+      console.log(clickedObject.name, intersects[0].object.name)
+      if (!clickedObject.userData) return;
+
+      if (clickedObject && clickedObject.userData.type === 'Image') {
 
         // Show popup with object info
         popupImage.src = clickedObject.userData.Map;
@@ -447,17 +463,17 @@ function init() {
 
         popup.classList.add('show'); // Add 'show' class to fade in
         popup.classList.remove('hidden'); // Ensure it's not hidden
-      
+
 
         console.log(clickedObject.userData.opis)
 
-      } else if (clickedObject.userData.type === 'Video') {
+      } else if (clickedObject && clickedObject.userData.type === 'Video') {
 
         // handle video
         video = document.getElementById(videoEl.object.userData.elementID);
         video.paused ? video.play() : video.pause();
 
-      } else if (clickedObject.userData.type === 'Floor') {
+      } else if (clickedObject && clickedObject.userData.type === 'Floor') {
 
         // Floor clicked - show circle
         const { point } = intersects[0];
@@ -584,27 +600,28 @@ function init() {
 
   // Close popup
   closeBtn.addEventListener('pointerdown', (event) => {
+    event.stopPropagation();
+
     //popup.style.display = 'none';
 
     popup.classList.remove('show'); // Fade out
     setTimeout(() => {
       popup.classList.add('hidden'); // Hide after animation completes
-    }, 400); 
+    }, 400);
 
-    event.stopPropagation();
   });
 
   // Close modal when clicking outside of the modal content
   popup.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
 
-  if (e.target === modalOverlay) {
-    popup.classList.remove('show'); // Fade out
-    setTimeout(() => {
-      popup.classList.add('hidden'); // Hide after animation completes
-    }, 400); // Match the transition duration
-  }
-});
+    if (e.target === modalOverlay) {
+      popup.classList.remove('show'); // Fade out
+      setTimeout(() => {
+        popup.classList.add('hidden'); // Hide after animation completes
+      }, 400); // Match the transition duration
+    }
+  });
 
   window.addEventListener(
     "resize",

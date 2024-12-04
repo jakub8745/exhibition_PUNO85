@@ -88,8 +88,9 @@ class ModelLoader {
                     exhibitObjects.traverse((object) => {
 
                         if (object.isMesh) {
+                            object.wireframe = true;
                             object.material.transparent = true;
-                            object.material.opacity = 0; // Make the material invisible
+                            object.material.opacity = 0.5; // Make the material invisible
                             object.interactive = true;  // Custom property for filtering interactive objects
                         }
                     });
