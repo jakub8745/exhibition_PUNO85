@@ -14,10 +14,10 @@ export default class Visitor extends Mesh {
 
     this.name = "visitor";
     this.capsuleInfo = {
-      radius: 0.2,
+      radius: 0.25,
       segment: new Line3(
         new Vector3(),
-        new Vector3(0.2, 0.1, 0.2)
+        new Vector3(0.2, 0.1 , 0.2)
       ),
     };
 
@@ -183,14 +183,15 @@ export default class Visitor extends Mesh {
     this.tempBox.min.addScalar(-capsuleInfo.radius);
     this.tempBox.max.addScalar(capsuleInfo.radius);
 
+    this.verticalCollisionDetected = false;
+
+
     collider.geometry.boundsTree.shapecast({
       intersectsBounds: (box) => box.intersectsBox(this.tempBox),
 
       intersectsTriangle: (tri) => {
         // check if the triangle is intersecting the capsule and adjust the
         // capsule position if it is.
-
-        const isVertical = Math.abs(this.tempVector.y) < 0.1; // Adjust threshold for "vertical"
 
         const triPoint = this.tempVector;
         const capsulePoint = this.tempVector2;
@@ -202,26 +203,20 @@ export default class Visitor extends Mesh {
         );
         if (distance < capsuleInfo.radius) {
 
-         if (isVertical) {
-          //console.log("Collision with a vertical element!!!", "tempVector", this.tempVector, TWEEN);
-  
-          // Stop all TWEEN animations
-          if (typeof TWEEN !== 'undefined') {
-            TWEEN.removeAll();
-            console.log("All TWEEN animations stopped due to vertical collision.");
-          }
-        }
-
           const depth = capsuleInfo.radius - distance;
           const direction = capsulePoint.sub(triPoint).normalize();
 
-          //console.log("direction: ", direction, "depth: ", depth, "distance: ", distance);
-
           this.tempSegment.start.addScaledVector(direction, depth);
           this.tempSegment.end.addScaledVector(direction, depth);
+
+          if (Math.abs(direction.y) < 0.1) {
+            this.verticalCollisionDetected = true;
+          }
         }
       },
     });
+
+ 
 
     // get the adjusted position of the capsule collider in world space after checking
     // triangle collisions and moving it. capsuleInfo.segment.start is assumed to be
@@ -242,6 +237,7 @@ export default class Visitor extends Mesh {
 
     // adjust the visitor model
     this.position.add(this.deltaVector);
+  
 
     if (!this.visitorIsOnGround) {
       this.deltaVector.normalize();
@@ -249,6 +245,7 @@ export default class Visitor extends Mesh {
         this.deltaVector,
         -this.deltaVector.dot(this.visitorVelocity)
       );
+      
     } else {
       this.visitorVelocity.set(0, 0, 0);
     }
@@ -265,6 +262,13 @@ export default class Visitor extends Mesh {
     target.add(new Vector3(0, 0, 0));
     this.sceneMap.getObjectByName("circleMap").position.copy(target);
 
+    if (this.verticalCollisionDetected) {
+
+      if (typeof TWEEN !== 'undefined') {
+        TWEEN.removeAll();
+        console.log("All TWEEN animations stopped due to vertical collision.");
+      }
+    }
     // if the visitor has fallen too far below the level reset their position to the start
     if (this.position.y < -10) {
 

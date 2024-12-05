@@ -3,7 +3,7 @@
 
 console.log('TODO: main scene COLLIDER nie działa');
 
-import { WebGLRenderer, Scene, PerspectiveCamera, WebGLRenderTarget, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
+import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
 import { Fog, AmbientLight, BufferGeometry, RingGeometry, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -44,7 +44,6 @@ const params = {
   visualizeDepth: 10,
   gravity: -30,
   visitorSpeed: 3,
-  //physicsSteps: 1,
   exposure: 1,
   gizmoVisible: false,
   canSeeGizmo: false,
@@ -60,10 +59,6 @@ const params = {
 
 if (params.isLowEndDevice) alert('You are using a device with low capabilities. Some features will be unavailable, the aesthetic experience of the 3D world will be limited. Despite this, we strongly encourage you to explore the Blue Point Art Archive, because the most IMPORTANT thing is the ARTWORK, and you will find a lot of it here.');
 
-let ileE = 2,
-  ileMesh = 0,
-  ileRazy = 0;
-
 //
 const listener = new AudioListener();
 
@@ -73,7 +68,7 @@ const textureFolder = "/textures/";
 let textureCache = {};
 
 let renderer, camera, scene, clock, tween, stats, anisotropy;
-let composer, renderTransitionPass
+let composer
 let rendererMap, cameraMap, circleMap, sceneMap, css2DRenderer
 const cameraDirection = new Vector3();
 
@@ -82,6 +77,10 @@ const ktx2Loader = new KTX2Loader()
 let collider, visitor, controls, control;
 let circle, circleYellow, circleBlue, circleTimeout, pulseScale, distance;
 let environment = new Group();
+
+let lastClickTime = 0; // Track the time of the last click
+const CLICK_DEBOUNCE_TIME = 300; // Minimum interval in milliseconds between clicks
+
 
 let MapAnimationId = null;
 let animationId = null;
@@ -308,8 +307,7 @@ function init() {
 
     visitor.visitorVelocity.set(0, 0, 0)
 
-    const targetV = visitor.target.clone()
-
+    const targetV = visitor.target.clone() 
     const circleMap = sceneMap.getObjectByName("circleMap");
     if (circleMap) {
       const targetVmap = visitor.target.clone()
@@ -317,7 +315,7 @@ function init() {
       circleMap.position.copy(targetVmap);
     }
 
-    targetV.y = 10;
+    targetV.y += 2;
     camera.position.sub(controls.target);
     controls.target.copy(targetV);
     camera.position.add(targetV);
@@ -325,7 +323,9 @@ function init() {
 
     visitor.position.copy(targetV);
 
-    animate();
+    visitor.updateMatrixWorld(true);
+
+    //animate();
 
   }
 
@@ -360,6 +360,9 @@ function init() {
 
   const ambientLight = new AmbientLight(0xFFF9E3, 5);
   visitor.mainScene.add(ambientLight);
+
+  visitor.position.set(0, 2, 0);
+  visitor.visitorVelocity.set(0, -10, 0);
 
   visitor.mainScene.add(visitor)
 
@@ -425,6 +428,13 @@ function init() {
 
   // optimized raycaster after click
   const onPointerDown = (event) => {
+
+    const currentTime = Date.now();
+    if (currentTime - lastClickTime < CLICK_DEBOUNCE_TIME) {
+      // If the time since the last click is less than the debounce interval, ignore this click
+      return;
+    }
+
     const { clientX, clientY } = event;
     pointer.x = (clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -444,13 +454,7 @@ function init() {
         validTypes.includes(intersect.object.userData.type)
     );
 
-
-    //console.log('intersects: ', intersects, 'clickedObject: ', clickedObject.object.name);
-    //const clickedObject = intersects.find((intersect) => intersect.object.userData && intersect.object.userData.type === 'Image');
-
-
     if (clickedObject && clickedObject.object.userData) {
-      //if (!clickedObject.object.userData) return;
 
       switch (clickedObject.object.userData.type) {
         case 'Image':
@@ -477,10 +481,6 @@ function init() {
         case 'Floor':
         case 'visitorLocation':
 
-          // bug/: sommetimes visitor is detecting interir floor
-
-          //console.log(clickedObject.object.userData.name);
-
           const { distance, point } = clickedObject;
 
           if (!circle) addPointerCircle();
@@ -488,8 +488,6 @@ function init() {
           // Check if the circle is already visible and clicked
           if (circle.visible && circle.userData.clicked) {
 
-
-            //console.log("circle.visible", circle.visible, clickedObject.object.position, circle.position, intersects);
             // Second click: move visitor to the circle's position
             clickedPoint.copy(point);
             visitorPos.copy(visitor.position.clone());
@@ -504,7 +502,7 @@ function init() {
                 visitor.updateMatrixWorld();
               });
 
-            tween.start(); // Start the tween immediately
+            tween.start();
 
             let innerRad = new Vector3(1, 1, 1);
             const zero = new Vector3(0, 0, 0);
