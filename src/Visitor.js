@@ -17,7 +17,7 @@ export default class Visitor extends Mesh {
       radius: 0.25,
       segment: new Line3(
         new Vector3(),
-        new Vector3(0.2, 0.1 , 0.2)
+        new Vector3(0.2, 0.1, 0.2)
       ),
     };
 
@@ -216,7 +216,7 @@ export default class Visitor extends Mesh {
       },
     });
 
- 
+
 
     // get the adjusted position of the capsule collider in world space after checking
     // triangle collisions and moving it. capsuleInfo.segment.start is assumed to be
@@ -237,7 +237,7 @@ export default class Visitor extends Mesh {
 
     // adjust the visitor model
     this.position.add(this.deltaVector);
-  
+
 
     if (!this.visitorIsOnGround) {
       this.deltaVector.normalize();
@@ -245,7 +245,7 @@ export default class Visitor extends Mesh {
         this.deltaVector,
         -this.deltaVector.dot(this.visitorVelocity)
       );
-      
+
     } else {
       this.visitorVelocity.set(0, 0, 0);
     }
@@ -264,9 +264,13 @@ export default class Visitor extends Mesh {
 
     if (this.verticalCollisionDetected) {
 
-      if (typeof TWEEN !== 'undefined') {
+      if (typeof TWEEN !== 'undefined' || this.controls.dragging) {
         TWEEN.removeAll();
-        console.log("All TWEEN animations stopped due to vertical collision.");
+
+        this.circle = this.parent.getObjectByName('circle');
+        if (this.circle) this.circle.visible = false;
+
+        console.log("All TWEEN animations stopped due to  collision with vertical object");
       }
     }
     // if the visitor has fallen too far below the level reset their position to the start

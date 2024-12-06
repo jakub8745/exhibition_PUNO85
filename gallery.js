@@ -307,7 +307,7 @@ function init() {
 
     visitor.visitorVelocity.set(0, 0, 0)
 
-    const targetV = visitor.target.clone() 
+    const targetV = visitor.target.clone()
     const circleMap = sceneMap.getObjectByName("circleMap");
     if (circleMap) {
       const targetVmap = visitor.target.clone()
@@ -427,128 +427,135 @@ function init() {
     });
 
   // optimized raycaster after click
+  let pressTimeout = null; // To track the long press timeout
+  let isPressing = false; // To track if the pointer is currently down
+
+  let isDragging = false; // To detect dragging
+  let startX = 0; // Start X position of pointer
+  let startY = 0; // Start Y position of pointer
+  const MOVE_THRESHOLD = 5; // Pixels of movement to consider a drag
+
   const onPointerDown = (event) => {
+    // Record the starting pointer position
+    startX = event.clientX;
+    startY = event.clientY;
+    isDragging = false; // Reset dragging flag
 
-    const currentTime = Date.now();
-    if (currentTime - lastClickTime < CLICK_DEBOUNCE_TIME) {
-      // If the time since the last click is less than the debounce interval, ignore this click
-      return;
-    }
+    isPressing = true;
 
-    const { clientX, clientY } = event;
-    pointer.x = (clientX / window.innerWidth) * 2 - 1;
-    pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+    // Start a timer for detecting a long press
+    pressTimeout = setTimeout(() => {
+      if (!isPressing || isDragging) return; // Cancel if dragging
 
+      // Process the long press action
+      const { clientX, clientY } = event;
+      pointer.x = (clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(clientY / window.innerHeight) * 2 + 1;
 
-    raycaster.setFromCamera(pointer, camera);
-    raycaster.firstHitOnly = true;
+      raycaster.setFromCamera(pointer, camera);
+      raycaster.firstHitOnly = true;
 
+      const intersects = raycaster.intersectObjects(visitor.scene.children);
 
-    intersects = raycaster.intersectObjects(visitor.scene.children)
+      const validTypes = ['Image', 'visitorLocation', 'Room', 'Floor', 'Video'];
 
-    const validTypes = ['Image', 'visitorLocation', 'Video'];
+      const clickedObject = intersects.find(
+        (intersect) =>
+          intersect.object.userData &&
+          validTypes.includes(intersect.object.userData.type)
+      );
 
-    const clickedObject = intersects.find(
-      (intersect) =>
-        intersect.object.userData &&
-        validTypes.includes(intersect.object.userData.type)
-    );
+      if (clickedObject && clickedObject.object.userData) {
+        switch (clickedObject.object.userData.type) {
+          case 'Image':
 
-    if (clickedObject && clickedObject.object.userData) {
+            popupImage.src = clickedObject.object.userData.Map;
+            popupDescription.textContent = clickedObject.object.userData.opis;
 
-      switch (clickedObject.object.userData.type) {
-        case 'Image':
-          console.log("image: ", clickedObject.object.name);
+            // Add fade-in effect
+            popup.style.opacity = "0"; // Start invisible
+            popup.classList.add('show'); // Add 'show' class to prepare for fade-in
+            popup.classList.remove('hidden'); // Ensure it's not hidden
 
-          // Show popup with object info
-          popupImage.src = clickedObject.object.userData.Map;
-          popupDescription.textContent = clickedObject.object.userData.opis;
+            // Trigger fade-in using opacity
+            setTimeout(() => {
+              popup.style.opacity = "1"; // Fade to visible
+            }, 7); // Small timeout to ensure CSS transition applies
 
-          popup.classList.add('show'); // Add 'show' class to fade in
-          popup.classList.remove('hidden'); // Ensure it's not hidden
+            break;
 
-          console.log(clickedObject.object.userData.opis);
-          break;
+          case 'Video':
+            console.log(clickedObject.object.userData.type);
+            video = document.getElementById(clickedObject.object.userData.elementID);
+            video.paused ? video.play() : video.pause();
+            break;
 
-        case 'Video':
-          console.log(clickedObject.object.userData.type);
+          case 'Floor':
+          case 'visitorLocation':
+          case 'Room':
+            const { distance, point } = clickedObject;
 
-          // Handle video
-          video = document.getElementById(clickedObject.object.userData.elementID);
-          video.paused ? video.play() : video.pause();
-          break;
+            circle = visitor.parent.getObjectByName('circle');
+            if (!circle) addPointerCircle();
 
-        case 'Floor':
-        case 'visitorLocation':
-
-          const { distance, point } = clickedObject;
-
-          if (!circle) addPointerCircle();
-
-          // Check if the circle is already visible and clicked
-          if (circle.visible && circle.userData.clicked) {
-
-            // Second click: move visitor to the circle's position
             clickedPoint.copy(point);
             visitorPos.copy(visitor.position.clone());
 
-            clickedPoint.y = (visitor.position.clone()).y;
+            clickedPoint.y = visitor.position.clone().y;
 
-            // Tween
+            circle.position.copy(point);
+            circle.scale.set(1, 1, 1);
+            circle.visible = true;
+
             tween = new TWEEN.Tween(visitorPos)
               .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
               .onUpdate(() => {
                 visitor.position.copy(visitorPos);
                 visitor.updateMatrixWorld();
+              })
+              .onComplete(() => {
+                circle.visible = false;
               });
 
             tween.start();
 
-            let innerRad = new Vector3(1, 1, 1);
-            const zero = new Vector3(0, 0, 0);
-            circle.position.copy(point);
-            circle.position.y += 0.01;
-            const tweenCircle = new TWEEN.Tween(innerRad);
-            tweenCircle.to(zero, 3000 / params.visitorSpeed);
-            tweenCircle.onUpdate(() => {
-              circle.scale.copy(innerRad);
-            });
-            tweenCircle.start();
-
-            // Reset the circle state after the visitor moves
-            if (circleTimeout) clearTimeout(circleTimeout);
-            circle.visible = false;
-            circle.userData.clicked = false;
-          } else {
-            // First click: show circle at the clicked location
-            circle.position.set(point.x, point.y + 0.01, point.z);
-            circle.visible = true;
-            pulseScale = 1;
-            circle.userData.clicked = true; // Mark circle as clickable
-
-            if (circleTimeout) clearTimeout(circleTimeout);
-
-            // Set a timeout to hide the circle if not clicked again
-            circleTimeout = setTimeout(() => {
-              if (circle.visible) {
+            const pulseTween = new TWEEN.Tween({ scale: 1 })
+              .to({ scale: 0 }, 400)
+              .repeat(Infinity)
+              .yoyo(true)
+              .onUpdate(({ scale }) => {
+                circle.scale.set(scale, scale, scale);
+              })
+              .onStop(() => {
                 circle.visible = false;
-                circle.userData.clicked = false; // Reset clicked state
-              }
-            }, 3000);
-          }
-          break;
+              });
 
+            pulseTween.start();
+            break;
 
-        default:
-
-          break;
-
+          default:
+            break;
+        }
       }
-    }
-
-
-
+    }, 700); // 0.5 seconds
   };
+
+  const onPointerMove = (event) => {
+    // Detect if the pointer moves beyond the threshold
+    if (Math.abs(event.clientX - startX) > MOVE_THRESHOLD || Math.abs(event.clientY - startY) > MOVE_THRESHOLD) {
+      isDragging = true; // Mark as dragging
+      clearTimeout(pressTimeout); // Cancel long-press timer if dragging
+    }
+  };
+
+  const onPointerUp = () => {
+    isPressing = false; // Reset pressing state
+    clearTimeout(pressTimeout); // Clear the timeout if pointer is released early
+  };
+
+  // Add event listeners
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
 
 
   // sidebar buttons events
@@ -780,8 +787,6 @@ function handleSceneBackground(deps) {
 async function updateVisitor(collider, delta) {
 
 
-  //console.log("updateVisitor","tween", TWEEN);
-
   const result = visitor.update(delta, collider, TWEEN);
 
   if (result.changed) {
@@ -915,8 +920,6 @@ function addVisitorMapCircle() {
 
   sceneMap.add(circleMap);
 
-
-
   //
 
 }
@@ -924,6 +927,7 @@ function addVisitorMapCircle() {
 function addPointerCircle() {
   /// circle (pointer)
   circle = new Group();
+  circle.name = 'circle'
   circle.position.copy(visitor.position);
   circle.position.y = -30;
 
@@ -951,7 +955,7 @@ function addPointerCircle() {
   circleBlue.rotation.x = (90 * Math.PI) / 180;
   circle.add(circleYellow);
   circle.add(circleBlue);
-  visitor.mainScene.add(circle);
+  visitor.parent.add(circle);
 }
 
 //
