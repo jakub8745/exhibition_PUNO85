@@ -74,8 +74,7 @@ export default class Visitor extends Mesh {
     this.lastFloorName = this.mainScene.name
 
   }
-
-
+  
   update(delta, collider, TWEEN) {
 
     // Update vertical velocity based on whether the visitor is on the ground
@@ -139,13 +138,8 @@ export default class Visitor extends Mesh {
       return type === "visitorLocation" || type === "Room";
     })?.object;
 
-    //console.log("floor: ", floor);
-
-
     return floor
   }
-
-
 
   moveToScene(newScene, callback) {
     this.scene = this.parent;
@@ -153,7 +147,6 @@ export default class Visitor extends Mesh {
     if (this.scene) {
       this.scene.remove(this);
     }
-
 
     this.scene = newScene;
     this.scene.add(this);
@@ -270,7 +263,6 @@ export default class Visitor extends Mesh {
         this.circle = this.parent.getObjectByName('circle');
         if (this.circle) this.circle.visible = false;
 
-        console.log("All TWEEN animations stopped due to  collision with vertical object");
       }
     }
     // if the visitor has fallen too far below the level reset their position to the start

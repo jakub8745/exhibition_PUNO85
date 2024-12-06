@@ -1,7 +1,6 @@
 
 //
 
-console.log('TODO: main scene COLLIDER nie działa');
 
 import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
 import { Fog, AmbientLight, BufferGeometry, RingGeometry, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
@@ -436,77 +435,77 @@ function init() {
   const MOVE_THRESHOLD = 5; // Pixels of movement to consider a drag
 
   const onPointerDown = (event) => {
+    event.preventDefault(); // Prevent default behavior like highlighting on touch
+  
     // Record the starting pointer position
     startX = event.clientX;
     startY = event.clientY;
     isDragging = false; // Reset dragging flag
-
+  
     isPressing = true;
-
+  
     // Start a timer for detecting a long press
     pressTimeout = setTimeout(() => {
       if (!isPressing || isDragging) return; // Cancel if dragging
-
+  
       // Process the long press action
       const { clientX, clientY } = event;
       pointer.x = (clientX / window.innerWidth) * 2 - 1;
       pointer.y = -(clientY / window.innerHeight) * 2 + 1;
-
+  
       raycaster.setFromCamera(pointer, camera);
       raycaster.firstHitOnly = true;
-
+  
       const intersects = raycaster.intersectObjects(visitor.scene.children);
-
+  
       const validTypes = ['Image', 'visitorLocation', 'Room', 'Floor', 'Video'];
-
+  
       const clickedObject = intersects.find(
         (intersect) =>
           intersect.object.userData &&
           validTypes.includes(intersect.object.userData.type)
       );
-
+  
       if (clickedObject && clickedObject.object.userData) {
         switch (clickedObject.object.userData.type) {
           case 'Image':
-
             popupImage.src = clickedObject.object.userData.Map;
             popupDescription.textContent = clickedObject.object.userData.opis;
-
+  
             // Add fade-in effect
             popup.style.opacity = "0"; // Start invisible
             popup.classList.add('show'); // Add 'show' class to prepare for fade-in
             popup.classList.remove('hidden'); // Ensure it's not hidden
-
+  
             // Trigger fade-in using opacity
             setTimeout(() => {
               popup.style.opacity = "1"; // Fade to visible
             }, 7); // Small timeout to ensure CSS transition applies
-
+  
             break;
-
+  
           case 'Video':
-            console.log(clickedObject.object.userData.type);
             video = document.getElementById(clickedObject.object.userData.elementID);
             video.paused ? video.play() : video.pause();
             break;
-
+  
           case 'Floor':
           case 'visitorLocation':
           case 'Room':
             const { distance, point } = clickedObject;
-
+  
             circle = visitor.parent.getObjectByName('circle');
             if (!circle) addPointerCircle();
-
+  
             clickedPoint.copy(point);
             visitorPos.copy(visitor.position.clone());
-
+  
             clickedPoint.y = visitor.position.clone().y;
-
+  
             circle.position.copy(point);
             circle.scale.set(1, 1, 1);
             circle.visible = true;
-
+  
             tween = new TWEEN.Tween(visitorPos)
               .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
               .onUpdate(() => {
@@ -516,9 +515,9 @@ function init() {
               .onComplete(() => {
                 circle.visible = false;
               });
-
+  
             tween.start();
-
+  
             const pulseTween = new TWEEN.Tween({ scale: 1 })
               .to({ scale: 0 }, 400)
               .repeat(Infinity)
@@ -529,17 +528,17 @@ function init() {
               .onStop(() => {
                 circle.visible = false;
               });
-
+  
             pulseTween.start();
             break;
-
+  
           default:
             break;
         }
       }
-    }, 700); // 0.5 seconds
+    }, 300); // Adjust as needed
   };
-
+  
   const onPointerMove = (event) => {
     // Detect if the pointer moves beyond the threshold
     if (Math.abs(event.clientX - startX) > MOVE_THRESHOLD || Math.abs(event.clientY - startY) > MOVE_THRESHOLD) {
@@ -792,7 +791,6 @@ async function updateVisitor(collider, delta) {
   if (result.changed) {
 
     const newFloor = result.newFloor;
-    console.log("changed", newFloor);
 
     let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
@@ -807,16 +805,11 @@ async function updateVisitor(collider, delta) {
 
     } else {
 
-      console.log("changed", newFloor);
-
-
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
       visitor.exhibitScene.add(new AmbientLight(0x404040, 45));
 
       async function loadScene() {
-
-        console.log("exhibitModelPath: ", exhibitModelPath);
 
         const collider = await modelLoader.loadModel(exhibitModelPath);
 
