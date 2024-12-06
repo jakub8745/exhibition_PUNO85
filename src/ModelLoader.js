@@ -3,7 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { MeshBVH, StaticGeometryGenerator } from "three-mesh-bvh";
-import { modifyObjects } from './modifyObjects.js';
+//import { modifyObjects } from './modifyObjects.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 
@@ -90,7 +90,7 @@ class ModelLoader {
                         if (object.isMesh) {
                             object.wireframe = true;
                             object.material.transparent = true;
-                            object.material.opacity = 0.5; // Make the material invisible
+                            object.material.opacity = 0.0; // Make the material invisible
                             object.interactive = true;  // Custom property for filtering interactive objects
                         }
                     });
@@ -152,6 +152,7 @@ class ModelLoader {
         
             // Additional object customization
             this.environment.traverse((c) => {
+                /*
                 if (c.isLight || c.isMesh) {
                     const options = {
                         gizmoVisible: this.deps.params.gizmoVisible,
@@ -171,7 +172,7 @@ class ModelLoader {
                     };
                    // modifyObjects[c.userData.type]?.(c, options);
                 }
-        
+        */
                 if (this.scene.name === "mainScene" &&
                     (/Wall|visitorLocation|Room/.test(c.userData.name) ||
                         /visitorLocation|Room/.test(c.userData.type))) {

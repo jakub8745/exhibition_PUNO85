@@ -41,8 +41,8 @@ const params = {
   firstPerson: true,
   displayCollider: false, //true,
   visualizeDepth: 10,
-  gravity: -30,
-  visitorSpeed: 3,
+  gravity: -70,
+  visitorSpeed: 2,
   exposure: 1,
   gizmoVisible: false,
   canSeeGizmo: false,
@@ -73,13 +73,9 @@ const cameraDirection = new Vector3();
 
 const ktx2Loader = new KTX2Loader()
 
-let collider, visitor, controls, control;
+let  visitor, controls, control;
 let circle, circleYellow, circleBlue, circleTimeout, pulseScale, distance;
 let environment = new Group();
-
-let lastClickTime = 0; // Track the time of the last click
-const CLICK_DEBOUNCE_TIME = 300; // Minimum interval in milliseconds between clicks
-
 
 let MapAnimationId = null;
 let animationId = null;
@@ -87,7 +83,7 @@ let animationId = null;
 const raycaster = new Raycaster();
 let intersectedFloor0 = new Object3D();
 intersectedFloor0.name = "FloorOut";
-let bgTexture0
+
 const lightsToTurn = [];
 const audioObjects = [];
 const visitorEnter = new Vector3();
@@ -95,21 +91,15 @@ const visitorEnter = new Vector3();
 const pointer = new Vector2();
 const clickedPoint = new Vector3();
 const visitorPos = new Vector3();
-let Wall,
-  result,
-  intersects,
-  video, videoEl, image
+let video
 
-let audioHandler, exhibitModelPath//, exhibitModelPath0;
+//let audioHandler, exhibitModelPath//, exhibitModelPath0;
 
 let deps = {};
 
 Mesh.prototype.raycast = acceleratedRaycast;
 BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
-
-let target = null;
-let timeout = null;
 
 const gui = new GUI();
 gui.show(false);
@@ -205,8 +195,6 @@ function init() {
   anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   ktx2Loader.setTranscoderPath('./libs/basis/').detectSupport(renderer);
-
-
 
 
   // scene setup
@@ -323,9 +311,6 @@ function init() {
     visitor.position.copy(targetV);
 
     visitor.updateMatrixWorld(true);
-
-    //animate();
-
   }
 
   //
@@ -367,9 +352,6 @@ function init() {
 
   //
   addVisitorMapCircle();
-
-  //visitor.mainScene.add(environment);
-
 
   // composer
   composer = new EffectComposer(renderer);
@@ -480,7 +462,7 @@ function init() {
             // Trigger fade-in using opacity
             setTimeout(() => {
               popup.style.opacity = "1"; // Fade to visible
-            }, 7); // Small timeout to ensure CSS transition applies
+            }, 5); // Small timeout to ensure CSS transition applies
   
             break;
   
@@ -620,10 +602,7 @@ function init() {
   //
 
   //////
-  // checking how many click
-  const textOnScreenEl = document.getElementById("text-on-screen");
-  const viewerEl = document.getElementById("viewer");
-
+ 
 
   // Popup DOM elements
   const popup = document.querySelector('.modal-overlay');
@@ -636,8 +615,6 @@ function init() {
   // Close popup
   closeBtn.addEventListener('pointerdown', (event) => {
     event.stopPropagation();
-
-    //popup.style.display = 'none';
 
     popup.classList.remove('show'); // Fade out
     setTimeout(() => {
@@ -754,13 +731,9 @@ function handleSceneBackground(deps) {
 
   let cachedTexture = textureCache[bgTexture]
 
-
   const scene = visitor.parent;
 
   return new Promise((resolve, reject) => {
-    if (!cachedTexture) {
-      cachedTexture = textureCache["/textures/bg_color.ktx2"];
-    }
 
     if (cachedTexture) {
 

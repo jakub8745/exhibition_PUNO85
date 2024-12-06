@@ -6,7 +6,7 @@ export default class Visitor extends Mesh {
 
     //deps
 
-    const geometry = new RoundedBoxGeometry(0.3, 0.3, 0.2, 2, 0.5);
+    const geometry = new RoundedBoxGeometry(0.2, 0.2, 0.2, 2, 0.2);
     const material = new MeshStandardMaterial();
     const { params, camera, controls, sceneMap, visitorEnter } = deps;
 
@@ -14,10 +14,10 @@ export default class Visitor extends Mesh {
 
     this.name = "visitor";
     this.capsuleInfo = {
-      radius: 0.25,
+      radius: 0.27,
       segment: new Line3(
         new Vector3(),
-        new Vector3(0.2, 0.1, 0.2)
+        new Vector3(0.6, 0.1, 0.2)
       ),
     };
 

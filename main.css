@@ -548,7 +548,7 @@ li.text_in_sidebar.open canvas.open {
   /* Start fully transparent for animation */
   opacity: 0;
   visibility: hidden;
-  transition: opacity 10s ease, visibility 1s ease;
+  transition: opacity 2s ease, visibility 1s ease;
 }
 
 /* Show the overlay (fade-in effect) */
