@@ -12,14 +12,15 @@ export default class Visitor extends Mesh {
 
     super(geometry, material);//
 
-    this.name = "visitor";
+    this.name = "visitor"; 
     this.capsuleInfo = {
-      radius: 0.27,
+      radius: 0.15, // Smaller radius for navigating narrow spaces
       segment: new Line3(
-        new Vector3(),
-        new Vector3(0.6, 0.1, 0.2)
+        new Vector3(0, 0, 0),    // Start of the capsule segment (at visitor origin)
+        new Vector3(0, 1.5, 0)   // End of the capsule segment (1.5 units tall)
       ),
     };
+
 
     this.castShadow = false;
     this.material.wireframe = true;
@@ -74,8 +75,8 @@ export default class Visitor extends Mesh {
     this.lastFloorName = this.mainScene.name
 
   }
-  
-  update(delta, collider, TWEEN) {
+
+  update(delta, collider) {
 
     // Update vertical velocity based on whether the visitor is on the ground
     if (this.visitorIsOnGround) {
@@ -112,7 +113,7 @@ export default class Visitor extends Mesh {
     this.updateMatrixWorld();
 
     // handle collisions
-    this.handleCollisions(delta, collider, TWEEN);
+    this.handleCollisions(delta, collider);
 
     //
 
@@ -158,7 +159,7 @@ export default class Visitor extends Mesh {
   }
 
 
-  handleCollisions(delta, collider, TWEEN) {
+  handleCollisions(delta, collider) {
     // adjust visitor position based on collisions
     const capsuleInfo = this.capsuleInfo;
     this.tempBox.makeEmpty();
@@ -196,11 +197,20 @@ export default class Visitor extends Mesh {
         );
         if (distance < capsuleInfo.radius) {
 
+
+
+
           const depth = capsuleInfo.radius - distance;
           const direction = capsulePoint.sub(triPoint).normalize();
 
-          this.tempSegment.start.addScaledVector(direction, depth);
-          this.tempSegment.end.addScaledVector(direction, depth);
+
+          // Prevent excessive adjustments by capping the depth
+          const maxDepth = 0.05; // Allow up to 5cm of adjustment
+          const adjustmentDepth = Math.min(depth, maxDepth);
+
+
+          this.tempSegment.start.addScaledVector(direction, adjustmentDepth);
+          this.tempSegment.end.addScaledVector(direction, adjustmentDepth);
 
           if (Math.abs(direction.y) < 0.1) {
             this.verticalCollisionDetected = true;
@@ -255,21 +265,15 @@ export default class Visitor extends Mesh {
     target.add(new Vector3(0, 0, 0));
     this.sceneMap.getObjectByName("circleMap").position.copy(target);
 
-    if (this.verticalCollisionDetected) {
 
-      if (typeof TWEEN !== 'undefined' || this.controls.dragging) {
-        TWEEN.removeAll();
-
-        this.circle = this.parent.getObjectByName('circle');
-        if (this.circle) this.circle.visible = false;
-
-      }
-    }
     // if the visitor has fallen too far below the level reset their position to the start
     if (this.position.y < -10) {
 
+
       this.reset();
     }
+
+
 
   }
 

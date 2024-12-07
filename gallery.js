@@ -42,6 +42,7 @@ const params = {
   displayCollider: false, //true,
   visualizeDepth: 10,
   gravity: -70,
+  physicsSteps: 3,
   visitorSpeed: 2,
   exposure: 1,
   gizmoVisible: false,
@@ -142,12 +143,6 @@ joystick.onDirectionChange((data) => {
 
 console.log("isLowEndDevice: ", params.isLowEndDevice);
 
-
-//
-const waitForMe = async (millisec) => {
-  await new Promise(resolve => requestAnimationFrame(time => resolve(time + millisec)));
-};
-
 //
 const fadeOutEl = (el) => {
   el.style.animation = "fadeOut 2s forwards";
@@ -155,6 +150,8 @@ const fadeOutEl = (el) => {
     el.remove();
   });
 };
+
+
 
 init();
 
@@ -346,7 +343,7 @@ function init() {
   visitor.mainScene.add(ambientLight);
 
   visitor.position.set(0, 2, 0);
-  visitor.visitorVelocity.set(0, -10, 0);
+  //visitor.visitorVelocity.set(0, -50, 0);
 
   visitor.mainScene.add(visitor)
 
@@ -532,7 +529,7 @@ function init() {
     }, 300); // Adjust as needed
   };
 
-  
+
 
   const onPointerMove = (event) => {
     // Detect if the pointer moves beyond the threshold
@@ -787,16 +784,27 @@ function handleSceneBackground(deps) {
 async function updateVisitor(collider, delta) {
 
 
-  const result = visitor.update(delta, collider, TWEEN);
+  const result = visitor.update(delta, collider);
+
+  if (visitor.verticalCollisionDetected) {
+
+    if (typeof TWEEN !== 'undefined' || controls.dragging) {
+      TWEEN.removeAll();
+
+      circle = visitor.parent.getObjectByName('circle');
+      if (circle) circle.visible = false;
+
+    }
+  }
 
   if (result.changed) {
 
-    const newFloor = result.newFloor;
+    stopAnimation(); // Stop the current animation loop during the transition
 
+    const newFloor = result.newFloor;
     let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
     if (newFloor.name === "FloorOut") {
-
 
       visitor.moveToScene(visitor.mainScene, () => {
         disposeSceneObjects(visitor.exhibitScene);
@@ -821,29 +829,44 @@ async function updateVisitor(collider, delta) {
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
 
-        animate();
+        visitor.moveToScene(visitor.exhibitScene)
+
+        await handleSceneBackground(deps);
       }
 
       await loadScene();
-      //
-      visitor.moveToScene(visitor.exhibitScene)
-
-      await handleSceneBackground(deps);
 
     }
     ///////////
-
-    cancelAnimationFrame(deps.animationId);
 
     visitor.lastFloorName = newFloor.name;
 
     const { bgTexture = "textures/bg_color.ktx2" } = newFloor.userData;
     deps.bgTexture = bgTexture;
+
+    startAnimation(); // Start a new animation loop
   }
 
 
+
+}
+///////////
+
+function startAnimation() {
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = requestAnimationFrame(animate);
 }
 
+function stopAnimation() {
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+}
+
+
+
+/////////
 
 
 function animateMap() {
@@ -862,34 +885,37 @@ function animateMap() {
 //
 function animate() {
 
-  if (!deps.params.exhibitCollider) return
-
+  if (!deps.params.exhibitCollider) return;
   const collider = deps.params.exhibitCollider;
 
   stats.update();
-  TWEEN.update();  // Update all tweens globally
-
+  TWEEN.update();
 
   const delta = Math.min(clock.getDelta(), 0.1);
 
-  // Update visitor position and movement logic
 
-  updateVisitor(collider, delta / 1);
+  //collider.visible = params.displayCollider;
 
 
+  for (let i = 0; i < params.physicsSteps; i++) {
+    updateVisitor(collider, delta / params.physicsSteps);
+  }
+
+
+  // Render based on the current scene
   if (!visitor.parent) return;
 
   if (visitor.parent === visitor.mainScene) {
-    composer.render();
-
+    composer.render(); // Render with effects
   } else {
-    renderer.render(visitor.parent, camera);
-
+    renderer.render(visitor.parent, camera); // Render the exhibit scene
   }
 
+  // Update controls and schedule the next frame
   controls.update();
-  deps.animationId = requestAnimationFrame(animate);
+  startAnimation(); // Ensures only one animation loop runs
 }
+
 
 
 
