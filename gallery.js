@@ -532,6 +532,8 @@ function init() {
     }, 300); // Adjust as needed
   };
 
+  
+
   const onPointerMove = (event) => {
     // Detect if the pointer moves beyond the threshold
     if (Math.abs(event.clientX - startX) > MOVE_THRESHOLD || Math.abs(event.clientY - startY) > MOVE_THRESHOLD) {

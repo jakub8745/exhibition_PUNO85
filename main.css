@@ -678,6 +678,7 @@ li.text_in_sidebar.open canvas.open {
     flex: 1; /* Secondary to the image */
     overflow-y: auto; /* Scrollable */
     padding: 20px;
+    height: auto;
   }
 }
 
