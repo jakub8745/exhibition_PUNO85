@@ -1,9 +1,13 @@
 /* Prevent text selection or highlighting */
 body {
-  -webkit-user-select: none; /* Disable user selection on iOS */
-  -webkit-touch-callout: none; /* Disable context menu on long press */
-  user-select: none; /* Disable user selection on other browsers */
-  touch-action: manipulation; /* Disable default touch actions */
+  -webkit-user-select: none;
+  /* Disable user selection on iOS */
+  -webkit-touch-callout: none;
+  /* Disable context menu on long press */
+  user-select: none;
+  /* Disable user selection on other browsers */
+  touch-action: manipulation;
+  /* Disable default touch actions */
 }
 
 
@@ -557,13 +561,17 @@ li.text_in_sidebar.open canvas.open {
   visibility: visible;
 }
 
+/* Hidden state for modal */
+.modal-overlay.hidden {
+  display: none;
+}
 
 /* Modal container */
 .modal {
   border-radius: 10px;
-  width: 90%;
-  max-width: 910px;
-  max-height: 90%;
+  width: 95%;
+  max-width: 90vw;
+  max-height: 95vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
@@ -597,32 +605,99 @@ li.text_in_sidebar.open canvas.open {
 .modal-image-container {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   padding: 20px;
   background: #f9f9f9;
+  max-height: 95vh;
 }
 
 .modal img {
   max-width: 100%;
-  max-height: calc(100% - 120px); /* Subtracting 4 lines of text + padding */
+  /*height: 85vh;*/
   object-fit: contain;
   border-radius: 8px;
 }
 
-/* Description below the image */
+/* Description */
 .modal-description {
   padding: 15px 20px;
   font-size: 16px;
   line-height: 1.5;
   color: #333;
-  height: 120px; /* Fixed height for description area */
-  overflow-y: auto; /* Enable vertical scrolling */
-  scrollbar-width: thin; /* For modern browsers */
+  height: 120px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
+/* Horizontal image styling */
+.modal-image-container img.horizontal {
+  flex: 3; /* Prioritize space for the image */
+  max-height: 85vh; /* Ensure it uses maximum vertical space */
+  width: auto; /* Maintain aspect ratio */
+  object-fit: contain;
+}
 
-/* Hidden state for modal */
-.modal-overlay.hidden {
-  display: none;
+.modal-description.horizontal {
+  flex: 1; /* Allow description to take minimal space */
+  max-height: 85vh; /* Ensure it doesn’t exceed modal height */
+  overflow-y: auto; /* Make description scrollable */
+  padding: 15px;
+}
+
+/* Vertical image styling */
+.modal-image-container img.vertical {
+  flex: 4; /* Give the image even more priority */
+  max-height: 85vh; /* Maximize image size vertically */
+  width: auto; /* Maintain aspect ratio */
+  object-fit: contain;
+}
+
+.modal-description.vertical {
+  flex: 1; /* Secondary to the image */
+  max-height: 85vh; /* Constrain to modal height */
+  overflow-y: auto; /* Make scrollable if needed */
+  padding: 15px;
+}
+
+/* General Modal Layout for Landscape Orientation */
+@media (orientation: landscape) {
+  .modal {
+    display: flex;
+    flex-direction: row; /* Arrange image and description side by side */
+  }
+
+  .modal-image-container {
+    flex: 4; /* The container gives priority to the image */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-description {
+    flex: 1; /* Secondary to the image */
+    overflow-y: auto; /* Scrollable */
+    padding: 20px;
+  }
+}
+
+/* General Modal Layout for Portrait Orientation */
+@media (orientation: portrait) {
+  .modal {
+    display: flex;
+    flex-direction: column; /* Stack image and description */
+  }
+
+  .modal-image-container {
+    flex: 3; /* Image gets priority */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-description {
+    flex: 1; /* Description is secondary */
+    overflow-y: auto; /* Scrollable */
+    padding: 15px;
+  }
 }

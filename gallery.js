@@ -73,7 +73,7 @@ const cameraDirection = new Vector3();
 
 const ktx2Loader = new KTX2Loader()
 
-let  visitor, controls, control;
+let visitor, controls, control;
 let circle, circleYellow, circleBlue, circleTimeout, pulseScale, distance;
 let environment = new Group();
 
@@ -418,76 +418,87 @@ function init() {
 
   const onPointerDown = (event) => {
     event.preventDefault(); // Prevent default behavior like highlighting on touch
-  
+
     // Record the starting pointer position
     startX = event.clientX;
     startY = event.clientY;
     isDragging = false; // Reset dragging flag
-  
+
     isPressing = true;
-  
+
     // Start a timer for detecting a long press
     pressTimeout = setTimeout(() => {
       if (!isPressing || isDragging) return; // Cancel if dragging
-  
+
       // Process the long press action
       const { clientX, clientY } = event;
       pointer.x = (clientX / window.innerWidth) * 2 - 1;
       pointer.y = -(clientY / window.innerHeight) * 2 + 1;
-  
+
       raycaster.setFromCamera(pointer, camera);
       raycaster.firstHitOnly = true;
-  
+
       const intersects = raycaster.intersectObjects(visitor.scene.children);
-  
+
       const validTypes = ['Image', 'visitorLocation', 'Room', 'Floor', 'Video'];
-  
+
       const clickedObject = intersects.find(
         (intersect) =>
           intersect.object.userData &&
           validTypes.includes(intersect.object.userData.type)
       );
-  
+
       if (clickedObject && clickedObject.object.userData) {
         switch (clickedObject.object.userData.type) {
           case 'Image':
+            // Set image source
             popupImage.src = clickedObject.object.userData.Map;
             popupDescription.textContent = clickedObject.object.userData.opis;
-  
+
+            // Reset classes for dynamic images
+            popupImage.classList.remove('horizontal', 'vertical');
+
+            // Wait for the image to load before checking dimensions
+            popupImage.addEventListener('load', () => {
+              const isHorizontal = popupImage.naturalWidth > popupImage.naturalHeight;
+              popupImage.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+            });
+
             // Add fade-in effect
             popup.style.opacity = "0"; // Start invisible
             popup.classList.add('show'); // Add 'show' class to prepare for fade-in
             popup.classList.remove('hidden'); // Ensure it's not hidden
-  
+
             // Trigger fade-in using opacity
             setTimeout(() => {
               popup.style.opacity = "1"; // Fade to visible
             }, 5); // Small timeout to ensure CSS transition applies
-  
+
             break;
-  
+
+
           case 'Video':
             video = document.getElementById(clickedObject.object.userData.elementID);
             video.paused ? video.play() : video.pause();
             break;
-  
+
           case 'Floor':
           case 'visitorLocation':
           case 'Room':
             const { distance, point } = clickedObject;
-  
+
             circle = visitor.parent.getObjectByName('circle');
             if (!circle) addPointerCircle();
-  
+
             clickedPoint.copy(point);
             visitorPos.copy(visitor.position.clone());
-  
+
             clickedPoint.y = visitor.position.clone().y;
-  
+
             circle.position.copy(point);
             circle.scale.set(1, 1, 1);
             circle.visible = true;
-  
+
             tween = new TWEEN.Tween(visitorPos)
               .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
               .onUpdate(() => {
@@ -497,9 +508,9 @@ function init() {
               .onComplete(() => {
                 circle.visible = false;
               });
-  
+
             tween.start();
-  
+
             const pulseTween = new TWEEN.Tween({ scale: 1 })
               .to({ scale: 0 }, 400)
               .repeat(Infinity)
@@ -510,17 +521,17 @@ function init() {
               .onStop(() => {
                 circle.visible = false;
               });
-  
+
             pulseTween.start();
             break;
-  
+
           default:
             break;
         }
       }
     }, 300); // Adjust as needed
   };
-  
+
   const onPointerMove = (event) => {
     // Detect if the pointer moves beyond the threshold
     if (Math.abs(event.clientX - startX) > MOVE_THRESHOLD || Math.abs(event.clientY - startY) > MOVE_THRESHOLD) {
@@ -601,8 +612,23 @@ function init() {
 
   //
 
+  document.querySelectorAll('.modal img').forEach((img) => {
+    // Ensure the image is loaded before accessing its dimensions
+    if (img.complete) {
+      addAspectClass(img);
+    } else {
+      img.addEventListener('load', () => addAspectClass(img));
+    }
+  });
+
+  function addAspectClass(img) {
+    const isHorizontal = img.naturalWidth > img.naturalHeight;
+    img.classList.add(isHorizontal ? 'horizontal' : 'vertical');
+  }
+
+
   //////
- 
+
 
   // Popup DOM elements
   const popup = document.querySelector('.modal-overlay');
