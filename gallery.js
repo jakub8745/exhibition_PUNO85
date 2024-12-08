@@ -183,7 +183,6 @@ function init() {
 
   const isAppleDevice = false///Mac|iPad|iPhone|iPod/.test(navigator.userAgent);
 
-
   renderer.toneMapping = params.isLowEndDevice ? LinearToneMapping : (isAppleDevice ? AgXToneMapping : ACESFilmicToneMapping);
   renderer.toneMappingExposure = params.exposure;
 
@@ -192,11 +191,6 @@ function init() {
   anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   ktx2Loader.setTranscoderPath('./libs/basis/').detectSupport(renderer);
-
-
-  // scene setup
-  scene = new Scene();
-
 
   // camera setup
   camera = new PerspectiveCamera(
@@ -279,26 +273,15 @@ function init() {
   const light = new AmbientLight(0xffffff, 20); // soft white light
   sceneMap.add(light);
 
-
-
-
   // stats setup
   stats = new Stats();
   document.body.appendChild(stats.dom);
-
 
   const resetVisitor = () => {
 
     visitor.visitorVelocity.set(0, 0, 0)
 
     const targetV = visitor.target.clone()
-    const circleMap = sceneMap.getObjectByName("circleMap");
-    if (circleMap) {
-      const targetVmap = visitor.target.clone()
-      targetVmap.y + 100
-      circleMap.position.copy(targetVmap);
-    }
-
     targetV.y += 2;
     camera.position.sub(controls.target);
     controls.target.copy(targetV);
@@ -306,8 +289,13 @@ function init() {
     controls.update();
 
     visitor.position.copy(targetV);
-
     visitor.updateMatrixWorld(true);
+
+    const circleMap = sceneMap.getObjectByName("circleMap");
+    if (circleMap) {
+      targetV.y + 100
+      circleMap.position.copy(targetV);
+    }
   }
 
   //
@@ -334,18 +322,15 @@ function init() {
     mainSceneY: undefined,
   };
 
+  // VISITOR
   visitor = new Visitor(deps);
-  visitor.exhibitScene.name = 'exhibitScene';
+  visitor.position.set(0, 2, 0);
+  visitor.mainScene.add(visitor)
 
   visitor.mainScene.fog = new Fog(0x2b0a07, 3.1, 18);
 
   const ambientLight = new AmbientLight(0xFFF9E3, 5);
   visitor.mainScene.add(ambientLight);
-
-  visitor.position.set(0, 2, 0);
-  //visitor.visitorVelocity.set(0, -50, 0);
-
-  visitor.mainScene.add(visitor)
 
   //
   addVisitorMapCircle();
@@ -360,7 +345,6 @@ function init() {
 
 
   // LOAD MODEL (environment, collider)
-
   const modelLoader = new ModelLoader(deps, visitor.parent);
 
   async function loadMainScene() {
@@ -484,31 +468,34 @@ function init() {
           case 'Room':
             const { distance, point } = clickedObject;
 
+            let pulseTween;
+
             circle = visitor.parent.getObjectByName('circle');
             if (!circle) addPointerCircle();
 
             clickedPoint.copy(point);
             visitorPos.copy(visitor.position.clone());
 
-            clickedPoint.y = visitor.position.clone().y;
-
             circle.position.copy(point);
             circle.scale.set(1, 1, 1);
             circle.visible = true;
 
-            tween = new TWEEN.Tween(visitorPos)
-              .to(clickedPoint, (distance * 1000) / params.visitorSpeed)
-              .onUpdate(() => {
-                visitor.position.copy(visitorPos);
+            const tweenTarget = { x: visitorPos.x, z: visitorPos.z };
+            tween = new TWEEN.Tween(tweenTarget)
+              .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
+              .onUpdate(({ x, z }) => {
+ 
+                visitor.position.set(x, visitor.position.y, z);
                 visitor.updateMatrixWorld();
               })
               .onComplete(() => {
                 circle.visible = false;
+                tween = null; // Clear tween reference
               });
 
             tween.start();
 
-            const pulseTween = new TWEEN.Tween({ scale: 1 })
+            pulseTween = new TWEEN.Tween({ scale: 1 })
               .to({ scale: 0 }, 400)
               .repeat(Infinity)
               .yoyo(true)
@@ -517,6 +504,7 @@ function init() {
               })
               .onStop(() => {
                 circle.visible = false;
+                pulseTween = null; // Clear pulseTween reference
               });
 
             pulseTween.start();
@@ -801,14 +789,21 @@ async function updateVisitor(collider, delta) {
 
     stopAnimation(); // Stop the current animation loop during the transition
 
+
+
     const newFloor = result.newFloor;
     let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
     if (newFloor.name === "FloorOut") {
 
+
+
       visitor.moveToScene(visitor.mainScene, () => {
         disposeSceneObjects(visitor.exhibitScene);
         deps.params.exhibitCollider = visitor.parent.getObjectByName("mainCollider")
+
+       
+
 
       });
 
@@ -821,7 +816,6 @@ async function updateVisitor(collider, delta) {
       async function loadScene() {
 
         const collider = await modelLoader.loadModel(exhibitModelPath);
-
         collider.name = "exhibitCollider";
 
         deps.params.exhibitCollider = collider;
@@ -829,22 +823,22 @@ async function updateVisitor(collider, delta) {
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
 
-        visitor.moveToScene(visitor.exhibitScene)
+        visitor.moveToScene(visitor.exhibitScene, () => {
+          handleSceneBackground(deps);
 
-        await handleSceneBackground(deps);
+        })
       }
 
       await loadScene();
 
     }
-    ///////////
 
     visitor.lastFloorName = newFloor.name;
 
     const { bgTexture = "textures/bg_color.ktx2" } = newFloor.userData;
     deps.bgTexture = bgTexture;
 
-    startAnimation(); // Start a new animation loop
+    startAnimation(); 
   }
 
 
@@ -864,9 +858,6 @@ function stopAnimation() {
   }
 }
 
-
-
-/////////
 
 
 function animateMap() {
@@ -893,30 +884,21 @@ function animate() {
 
   const delta = Math.min(clock.getDelta(), 0.1);
 
-
-  //collider.visible = params.displayCollider;
-
-
   for (let i = 0; i < params.physicsSteps; i++) {
     updateVisitor(collider, delta / params.physicsSteps);
   }
 
-
-  // Render based on the current scene
   if (!visitor.parent) return;
 
   if (visitor.parent === visitor.mainScene) {
-    composer.render(); // Render with effects
+    composer.render(); 
   } else {
     renderer.render(visitor.parent, camera); // Render the exhibit scene
   }
 
-  // Update controls and schedule the next frame
   controls.update();
-  startAnimation(); // Ensures only one animation loop runs
+  startAnimation(); 
 }
-
-
 
 
 function addVisitorMapCircle() {
