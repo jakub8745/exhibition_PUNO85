@@ -3,7 +3,7 @@
 
 
 import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
-import { Fog, AmbientLight, BufferGeometry, RingGeometry, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
+import { Fog, AmbientLight, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
@@ -48,8 +48,8 @@ const params = {
   gizmoVisible: false,
   canSeeGizmo: false,
   transControlsMode: "rotate",
-  heightOffset: new Vector3(0, 0.33, 0),// offset the camera from the visitor
-  archiveModelPath: "/models/nowy_exterior.glb",
+  heightOffset: new Vector3(0, 0.93, 0),// offset the camera from the visitor
+  archiveModelPath: "/models/cipriani_exterior.glb",
   enablePostProcessing: true,
   isLowEndDevice: false,//navigator.hardwareConcurrency <= 4,
   transitionAnimate: true,
@@ -87,7 +87,7 @@ intersectedFloor0.name = "FloorOut";
 
 const lightsToTurn = [];
 const audioObjects = [];
-const visitorEnter = new Vector3();
+const visitorEnter = new Vector3(5, 5, 5);
 
 const pointer = new Vector2();
 const clickedPoint = new Vector3();
@@ -183,7 +183,7 @@ function init() {
 
   const isAppleDevice = false///Mac|iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  renderer.toneMapping = params.isLowEndDevice ? LinearToneMapping : (isAppleDevice ? AgXToneMapping : ACESFilmicToneMapping);
+  renderer.toneMapping = params.isLowEndDevice ? LinearToneMapping : (isAppleDevice ? AgXToneMapping : ReinhardToneMapping);
   renderer.toneMappingExposure = params.exposure;
 
   document.body.appendChild(renderer.domElement);
@@ -270,14 +270,16 @@ function init() {
 
 
   // AmbientLight MAP
-  const light = new AmbientLight(0xffffff, 20); // soft white light
-  sceneMap.add(light);
+  //const light = new AmbientLight(0xffffff, 60); // soft white light
+  //sceneMap.add(light);
 
   // stats setup
   stats = new Stats();
   document.body.appendChild(stats.dom);
 
   const resetVisitor = () => {
+
+    console.log("reset visitor");
 
     visitor.visitorVelocity.set(0, 0, 0)
 
@@ -296,7 +298,10 @@ function init() {
       targetV.y + 100
       circleMap.position.copy(targetV);
     }
+
+    rotateOrbit(180);
   }
+
 
   //
   deps = {
@@ -324,7 +329,8 @@ function init() {
 
   // VISITOR
   visitor = new Visitor(deps);
-  visitor.position.set(0, 2, 0);
+  visitor.position.set(-4.808420282897411, 0.20870486663818358, 4.438353369305904);
+  
   visitor.mainScene.add(visitor)
 
   visitor.mainScene.fog = new Fog(0x2b0a07, 3.1, 18);
@@ -352,6 +358,8 @@ function init() {
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
 
+    console.log("load main", params.archiveModelPath)
+
     mainCollider.name = "mainCollider";
 
     deps.params.exhibitCollider = mainCollider;
@@ -364,6 +372,8 @@ function init() {
       scene.background = texture;
       scene.backgroundIntensity = 1;
       scene.backgroundBlurriness = 0;
+
+      rotateOrbit(180);
 
     });
 
@@ -484,7 +494,7 @@ function init() {
             tween = new TWEEN.Tween(tweenTarget)
               .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
               .onUpdate(({ x, z }) => {
- 
+
                 visitor.position.set(x, visitor.position.y, z);
                 visitor.updateMatrixWorld();
               })
@@ -701,6 +711,14 @@ function init() {
         control.setMode("rotate");
         break;
       case "t":
+        console.log("visitor.position", visitor.position);
+
+
+
+        // Function to rotate orbit
+
+
+        rotateOrbit(180);
 
         break;
       case "Escape":
@@ -787,12 +805,18 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
+    console.log("changed", result.newFloor.name);
+
+    if (result.newFloor.name !== "PodlogaSchodyPodest" && result.newFloor.name !== "floor_Cipriani") return;
+
     stopAnimation(); // Stop the current animation loop during the transition
 
 
 
     const newFloor = result.newFloor;
-    let exhibitModelPath = newFloor.userData.exhibitModelPath;
+    //let exhibitModelPath = newFloor.userData.exhibitModelPath;
+
+    let exhibitModelPath = "/models/cipriani_interior.glb";
 
     if (newFloor.name === "FloorOut") {
 
@@ -802,7 +826,7 @@ async function updateVisitor(collider, delta) {
         disposeSceneObjects(visitor.exhibitScene);
         deps.params.exhibitCollider = visitor.parent.getObjectByName("mainCollider")
 
-       
+
 
 
       });
@@ -811,15 +835,19 @@ async function updateVisitor(collider, delta) {
 
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
-      visitor.exhibitScene.add(new AmbientLight(0x404040, 45));
+      visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
 
       async function loadScene() {
+
+        console.log("load scene", exhibitModelPath);
 
         const collider = await modelLoader.loadModel(exhibitModelPath);
         collider.name = "exhibitCollider";
 
         deps.params.exhibitCollider = collider;
-        deps.bgTexture = newFloor.userData.bgTexture || "public/textures/bg_color.ktx2";
+        deps.bgTexture = "/textures/bg_color.ktx2" //newFloor.userData.bgTexture || "/textures/bg_color.ktx2";
+
+        console.log(deps.bgTexture);
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
 
@@ -838,7 +866,7 @@ async function updateVisitor(collider, delta) {
     const { bgTexture = "textures/bg_color.ktx2" } = newFloor.userData;
     deps.bgTexture = bgTexture;
 
-    startAnimation(); 
+    startAnimation();
   }
 
 
@@ -891,13 +919,13 @@ function animate() {
   if (!visitor.parent) return;
 
   if (visitor.parent === visitor.mainScene) {
-    composer.render(); 
+    composer.render();
   } else {
     renderer.render(visitor.parent, camera); // Render the exhibit scene
   }
 
   controls.update();
-  startAnimation(); 
+  startAnimation();
 }
 
 
@@ -995,5 +1023,27 @@ function preloadTextures() {
 
   return textureCache; // Return the cache for further use
 }
+const rotateOrbit = (angleDegrees) => {
+  const angleRadians = MathUtils.degToRad(angleDegrees);
 
+  // Calculate the camera's position relative to the controls target
+  const offset = camera.position.clone().sub(controls.target);
+
+  // Convert the offset to spherical coordinates
+  const spherical = new Spherical();
+  spherical.setFromVector3(offset);
+
+  // Adjust the azimuthal angle (horizontal rotation) by the specified angle
+  spherical.theta += angleRadians;
+
+  // Convert back to Cartesian coordinates
+  const newOffset = new Vector3().setFromSpherical(spherical);
+
+  // Update the camera's position and make it look at the target
+  camera.position.copy(controls.target).add(newOffset);
+  camera.lookAt(controls.target);
+
+  // Update controls to reflect the change
+  controls.update();
+};
 

@@ -12,7 +12,7 @@ export default class Visitor extends Mesh {
 
     super(geometry, material);//
 
-    this.name = "visitor"; 
+    this.name = "visitor";
     this.capsuleInfo = {
       radius: 0.15, // Smaller radius for navigating narrow spaces
       segment: new Line3(
@@ -68,7 +68,7 @@ export default class Visitor extends Mesh {
     this.rgtPressed = false;
     this.upVector = new Vector3(0, 1, 0); // Default up vector
 
-    this.target = visitorEnter
+    this.target = new Vector3(2, 10, 2);// visitorEnter || new Vector3(2,10,2);
 
     deps.visitor = this;
 
@@ -116,6 +116,8 @@ export default class Visitor extends Mesh {
     this.handleCollisions(delta, collider);
 
     //
+
+    // console.log(this.position);
 
     const currentFloor = this.checkLocation();
 
@@ -267,7 +269,7 @@ export default class Visitor extends Mesh {
 
 
     // if the visitor has fallen too far below the level reset their position to the start
-    if (this.position.y < -10) {
+    if (this.position.y < 0) {
 
 
       this.reset();

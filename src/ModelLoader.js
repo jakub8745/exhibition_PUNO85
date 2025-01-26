@@ -66,6 +66,8 @@ class ModelLoader {
                     }
                 }
             };
+
+            // .log("modelPath", modelPath);
         
             const { scene: gltfScene } = await this.gltfLoader.loadAsync(modelPath, onProgress);
         
@@ -83,7 +85,12 @@ class ModelLoader {
                 });
         
                 if (this.newFloor.userData.exhibitObjectsPath) {
-                    const { scene: exhibitObjects } = await this.gltfLoader.loadAsync(this.newFloor.userData.exhibitObjectsPath, onProgress);
+
+                
+
+                    //console.log("this.newFloor.userData.exhibitObjectsPath", this.newFloor.userData.exhibitObjectsPath);
+
+                    const { scene: exhibitObjects } = await this.gltfLoader.loadAsync('/models/cipriani_objects.glb', onProgress);
                     
                     exhibitObjects.traverse((object) => {
 
@@ -122,7 +129,7 @@ class ModelLoader {
                 arr.forEach((mesh) => {
                     if (mesh.userData.name !== "VisitorEnter") {
                         this.environment.attach(mesh);
-                    }
+                    }else(console.log("VisitorEnter", mesh));
                 });
             }
         
