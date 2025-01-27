@@ -1,7 +1,3 @@
-
-//
-
-
 import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
 import { Fog, AmbientLight, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
@@ -75,7 +71,7 @@ const cameraDirection = new Vector3();
 const ktx2Loader = new KTX2Loader()
 
 let visitor, controls, control;
-let circle, circleYellow, circleBlue, circleTimeout, pulseScale, distance;
+let circle, circleYellow, circleBlue
 let environment = new Group();
 
 let MapAnimationId = null;
@@ -94,7 +90,6 @@ const clickedPoint = new Vector3();
 const visitorPos = new Vector3();
 let video
 
-//let audioHandler, exhibitModelPath//, exhibitModelPath0;
 
 let deps = {};
 
@@ -359,6 +354,7 @@ function init() {
     const scene = visitor.parent;
 
     //params.archiveModelPath = "/models/cipriani_interior.glb"
+    
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
 
@@ -375,14 +371,16 @@ function init() {
       scene.backgroundIntensity = 1;
       scene.backgroundBlurriness = 0;
 
-      //rotateOrbit(180);
+      rotateOrbit(180);
 
     });
 
     animate();
   }
 
-  loadMainScene();
+  document.addEventListener('DOMContentLoaded', function() {
+    loadMainScene();
+  });
 
   textureCache = preloadTextures();
 
@@ -409,12 +407,10 @@ function init() {
       
 
       const el = visitor.checkLocation();
-      //const el = floorChecker.name
 
       console.log('floorChecker', el);
 
       const audioHandler = new AudioHandler();
-      //const el = floorChecker.checkVisitorLocation(visitor);
       audioHandler.handleAudio(visitor.parent.getObjectByName(el.userData.audioToPlay));
     });
 
@@ -551,6 +547,7 @@ function init() {
 
 
   const onPointerMove = (event) => {
+
     // Detect if the pointer moves beyond the threshold
     if (Math.abs(event.clientX - startX) > MOVE_THRESHOLD || Math.abs(event.clientY - startY) > MOVE_THRESHOLD) {
       isDragging = true; // Mark as dragging
@@ -829,14 +826,9 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
-    //if (result.newFloor.name !== "PodlogaSchodyPodest" && result.newFloor.name !== "floor_Cipriani") return;
-
     stopAnimation(); // Stop the current animation loop during the transition
 
-
-
     const newFloor = result.newFloor;
-    //let exhibitModelPath = newFloor.userData.exhibitModelPath;
 
     let exhibitModelPath = "/models/cipriani_interior.glb";
     newFloor.name = "PodlogaSchodyPodest"
@@ -860,22 +852,54 @@ async function updateVisitor(collider, delta) {
 
       visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
 
+      const loadingElement = document.getElementById('loading');
+      const progressText = document.getElementById('progress-text');
+  
+      // Show the loading spinner
+      loadingElement.style.display = 'block';
+      progressText.textContent = "Preparing to load...";
+
       async function loadScene() {
+        const loadingElement = document.getElementById('loading'); // Reference to the loading element
+        const progressText = document.getElementById('progress-text'); // Optional progress text
+    
+        // Show the loading spinner
+        loadingElement.style.display = 'flex';
+        progressText.textContent = "Loading scene...";
+    
+        try {
+            console.log("load scene", exhibitModelPath);
+    
+            // Load the main model
+            const collider = await modelLoader.loadModel(exhibitModelPath);
+            collider.name = "exhibitCollider";
+    
+            // Update dependencies with loaded data
+            deps.params.exhibitCollider = collider;
+            deps.bgTexture = "/textures/bg_color.ktx2"; // Optional background texture
+            deps.bgInt = newFloor.userData.bgInt || 1;
+            deps.bgBlur = newFloor.userData.bgBlur || 0;
+    
+            // Move visitor to the scene and handle the background
+            visitor.moveToScene(visitor.exhibitScene, () => {
+                handleSceneBackground(deps);
+            });
+    
+            console.log("Scene loaded successfully");
+        } catch (error) {
+            console.error("Error loading scene:", error);
+            progressText.textContent = "Error loading scene.";
+        } finally {
+            // Hide the loading spinner after everything is done
+            loadingElement.style.display = 'none';
+        }
+    }
+    
+    // Call loadScene and wait for it to complete
+    await loadScene();
+    
 
-        const collider = await modelLoader.loadModel(exhibitModelPath);
-        collider.name = "exhibitCollider";
-
-        deps.params.exhibitCollider = collider;
-        deps.bgTexture = "/textures/bg_color.ktx2" //newFloor.userData.bgTexture || "/textures/bg_color.ktx2";
-
-        deps.bgInt = newFloor.userData.bgInt || 1;
-        deps.bgBlur = newFloor.userData.bgBlur || 0;
-
-        visitor.moveToScene(visitor.exhibitScene, () => {
-          handleSceneBackground(deps);
-
-        })
-      }
+      
 
       await loadScene();
 

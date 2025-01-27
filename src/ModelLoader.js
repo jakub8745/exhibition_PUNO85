@@ -1,4 +1,4 @@
-import { Group, Box3, Mesh, MeshBasicMaterial, LoadingManager, PositionalAudio,AudioLoader } from 'three';
+import { Group, Box3, Mesh, MeshBasicMaterial, LoadingManager, PositionalAudio, AudioLoader } from 'three';
 import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
 
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -42,7 +42,7 @@ class ModelLoader {
 
         this.setupLoaders();
 
-       
+
 
 
 
@@ -51,51 +51,85 @@ class ModelLoader {
     async loadModel(modelPath) {
         const loadingElement = document.getElementById('loading');
         const progressText = document.getElementById('progress-text');
-
-        // Display the loading spinner
+    
+        // Show the loading spinner
         loadingElement.style.display = 'flex';
-
+        progressText.textContent = "Preparing to load...";
+    
+        // Ensure the DOM update happens before loading starts
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+    
         try {
-            //this.setupLoaders();
-
             const totalModels = this.newFloor?.userData.exhibitObjectsPath ? 2 : 1;
             let currentModel = 1;
-
+    
             // Load the main model
+            progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
             const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels, progressText);
-
+    
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
-
+    
             // Load exhibit objects if applicable
             if (this.newFloor?.userData.exhibitObjectsPath) {
                 currentModel++;
+                progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
                 const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', currentModel, totalModels, progressText);
                 this.processExhibitObjects(exhibitObjects);
                 gltfScene.add(exhibitObjects);
             }
-
+    
+            // Process scene objects
             this.processSceneObjects(gltfScene);
-
+    
+            // Create and add colliders
             const collider = this.createCollider();
             this.scene.add(collider);
             this.deps.collider = collider;
-
+    
+            // Add environment to the scene
             this.scene.add(this.environment);
-
+    
+            // Customize the environment and finalize setup
             this.customizeEnvironment();
             this.addToSceneMapRun = true;
-
+    
+            console.log('Model loaded successfully');
             return collider;
-
+    
         } catch (error) {
             console.error('Error loading model:', error);
+            progressText.textContent = 'Error loading model.';
             throw error;
+    
         } finally {
-            // Hide the loading spinner
+            console.log('Ensuring all tasks are complete');
+            await Promise.allSettled([
+                // Add any other async tasks to wait for here
+            ]);
+        
+            console.log('Hiding loading spinner');
             loadingElement.style.display = 'none';
         }
     }
+    
+
+
+    // Helper function to load GLTF model
+    async loadGLTFModel(modelPath, currentModel, totalModels, progressText) {
+        const onProgress = (xhr) => {
+            if (xhr.total) {
+                const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
+                progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
+                console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
+            }
+        };
+
+        const { scene: gltfScene } = await this.gltfLoader.loadAsync(modelPath, onProgress);
+        gltfScene.updateMatrixWorld(true);
+        return gltfScene;
+    }
+
 
     // Helper function to set up loaders
     setupLoaders() {
@@ -105,18 +139,7 @@ class ModelLoader {
     }
 
     // Helper function to load GLTF model
-    async loadGLTFModel(modelPath, currentModel, totalModels, progressText) {
-        const onProgress = (xhr) => {
-            if (xhr.total) {
-                const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
-                progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
-            }
-        };
 
-        const { scene: gltfScene } = await this.gltfLoader.loadAsync(modelPath, onProgress);
-        gltfScene.updateMatrixWorld(true);
-        return gltfScene;
-    }
 
     // Helper function to adjust floor
     adjustFloor(gltfScene) {
@@ -161,7 +184,7 @@ class ModelLoader {
             objects.forEach((mesh) => {
                 if (mesh.userData.name !== "VisitorEnter" && mesh.userData.name !== "ciprianiAudio") {
                     this.environment.attach(mesh);
-                } else if (mesh.userData.name === "ciprianiAudio"){
+                } else if (mesh.userData.name === "ciprianiAudio") {
                     //
                     console.log("ciprianiAudio znaleziony", mesh.userData);
 
@@ -253,11 +276,11 @@ class ModelLoader {
         console.log("ciprianiAudio znaleziony", mesh.userData);
         // Scale the mesh for the audio icon or object
         mesh.scale.setScalar(0.1);
-    
+
         // Create positional audio
         const sound = new PositionalAudio(this.deps.listener);
         const audioLoader = new AudioLoader();
-    
+
         // Load the audio file
         audioLoader.load(mesh.userData.audio, (buffer) => {
             sound.name = 'trembitaAudio'; // Assign name to the audio
@@ -267,20 +290,20 @@ class ModelLoader {
             sound.setRolloffFactor(mesh.userData.audioRolloffFactor);
             sound.setVolume(mesh.userData.audioVolume);
             sound.setDirectionalCone(10, 23, 0.1);
-    
+
             // Add positional audio helper (for visualization during development)
             const helper = new PositionalAudioHelper(sound, 20);
             sound.add(helper);
-    
+
             // Attach sound to the mesh
             mesh.add(sound);
-    
+
             // Add the audio object to the shared array
             this.deps.audioObjects.push(sound);
         });
     }
-    
-    
+
+
 }
 
 export default ModelLoader;
