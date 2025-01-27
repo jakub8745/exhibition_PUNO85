@@ -49,23 +49,24 @@ class ModelLoader {
     }
 
     async loadModel(modelPath) {
-        const loadingElement = document.getElementById('loading');
-        const progressText = document.getElementById('progress-text');
+        //const loadingElement = document.getElementById('loading');
+        //const progressText = document.getElementById('progress-text');
     
         // Show the loading spinner
-        loadingElement.style.display = 'flex';
-        progressText.textContent = "Preparing to load...";
+        //loadingElement.style.display = 'flex';
+        //progressText.textContent = "Preparing to load...";
     
         // Ensure the DOM update happens before loading starts
-        await new Promise((resolve) => requestAnimationFrame(resolve));
+        //await new Promise((resolve) => requestAnimationFrame(resolve));
     
         try {
-            const totalModels = this.newFloor?.userData.exhibitObjectsPath ? 2 : 1;
-            let currentModel = 1;
+            //const totalModels = this.newFloor?.userData.exhibitObjectsPath ? 2 : 1;
+            let currentModel = 2;
+            const totalModels = 2;
     
             // Load the main model
-            progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
-            const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels, progressText);
+           // progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
+            const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels);
     
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
@@ -73,8 +74,8 @@ class ModelLoader {
             // Load exhibit objects if applicable
             if (this.newFloor?.userData.exhibitObjectsPath) {
                 currentModel++;
-                progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
-                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', currentModel, totalModels, progressText);
+                //progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
+                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', currentModel, totalModels);
                 this.processExhibitObjects(exhibitObjects);
                 gltfScene.add(exhibitObjects);
             }
@@ -94,22 +95,19 @@ class ModelLoader {
             this.customizeEnvironment();
             this.addToSceneMapRun = true;
     
-            console.log('Model loaded successfully');
             return collider;
     
         } catch (error) {
             console.error('Error loading model:', error);
-            progressText.textContent = 'Error loading model.';
+            //progressText.textContent = 'Error loading model.';
             throw error;
     
         } finally {
-            console.log('Ensuring all tasks are complete');
             await Promise.allSettled([
                 // Add any other async tasks to wait for here
             ]);
         
-            console.log('Hiding loading spinner');
-            loadingElement.style.display = 'none';
+            //loadingElement.style.display = 'none';
         }
     }
     
@@ -118,10 +116,13 @@ class ModelLoader {
     // Helper function to load GLTF model
     async loadGLTFModel(modelPath, currentModel, totalModels, progressText) {
         const onProgress = (xhr) => {
+
             if (xhr.total) {
+
                 const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
-                progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
+
                 console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
+                //progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
             }
         };
 
@@ -186,7 +187,6 @@ class ModelLoader {
                     this.environment.attach(mesh);
                 } else if (mesh.userData.name === "ciprianiAudio") {
                     //
-                    console.log("ciprianiAudio znaleziony", mesh.userData);
 
                     this.createAudio(mesh);
                     this.environment.attach(mesh);
@@ -273,7 +273,6 @@ class ModelLoader {
 
     createAudio(mesh) {
 
-        console.log("ciprianiAudio znaleziony", mesh.userData);
         // Scale the mesh for the audio icon or object
         mesh.scale.setScalar(0.1);
 

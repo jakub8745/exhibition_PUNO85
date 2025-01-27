@@ -350,11 +350,35 @@ function init() {
   // LOAD MODEL (environment, collider)
   const modelLoader = new ModelLoader(deps, visitor.parent);
 
+  const rotateOrbit = (angleDegrees) => {
+    const angleRadians = MathUtils.degToRad(angleDegrees);
+
+    // Calculate the camera's position relative to the controls target
+    const offset = camera.position.clone().sub(controls.target);
+
+    // Convert the offset to spherical coordinates
+    const spherical = new Spherical();
+    spherical.setFromVector3(offset);
+
+    // Adjust the azimuthal angle (horizontal rotation) by the specified angle
+    spherical.theta += angleRadians;
+
+    // Convert back to Cartesian coordinates
+    const newOffset = new Vector3().setFromSpherical(spherical);
+
+    // Update the camera's position and make it look at the target
+    camera.position.copy(controls.target).add(newOffset);
+    camera.lookAt(controls.target);
+
+    // Update controls to reflect the change
+    controls.update();
+  };
+
   async function loadMainScene() {
     const scene = visitor.parent;
 
     //params.archiveModelPath = "/models/cipriani_interior.glb"
-    
+
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
 
@@ -378,7 +402,7 @@ function init() {
     animate();
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     loadMainScene();
   });
 
@@ -390,21 +414,13 @@ function init() {
 
   // events
 
-  document
-    .querySelector("#play-icon")
-    .addEventListener("pointerdown", (evt) => {
-      evt.preventDefault();
-      const floorChecker = new VisitorLocationChecker(scene);
-      const audioHandler = new AudioHandler();
-      const el = floorChecker.checkVisitorLocation(visitor);
-      audioHandler.handleAudio(scene.getObjectByName(el.userData.audioToPlay));
-    });
+
 
   document
     .querySelector("img#audio-on")
     .addEventListener("pointerdown", (evt) => {
       evt.preventDefault();
-      
+
 
       const el = visitor.checkLocation();
 
@@ -843,64 +859,68 @@ async function updateVisitor(collider, delta) {
 
     } else {
 
-      if (visitor.exhibitScene.children.length !== 0) return;
+      // Check if the scene is already loaded
+      if (visitor.exhibitScene.children.length !== 0) {
+        console.warn("Scene already loaded. Skipping load.");
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) loadingElement.style.display = 'none'; // Hide spinner if it was shown
+        return;
+      }
 
       console.log('newfloor', newFloor);
 
-
+      // Initialize ModelLoader
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
-
       visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
 
-      const loadingElement = document.getElementById('loading');
       const progressText = document.getElementById('progress-text');
-  
-      // Show the loading spinner
-      loadingElement.style.display = 'block';
       progressText.textContent = "Preparing to load...";
 
       async function loadScene() {
-        const loadingElement = document.getElementById('loading'); // Reference to the loading element
-        const progressText = document.getElementById('progress-text'); // Optional progress text
-    
+        const loadingElement = document.getElementById('loading');
+        const progressText = document.getElementById('progress-text');
+
+        if (!loadingElement) {
+          console.error("Loading element not found in DOM!");
+          return;
+        }
+
         // Show the loading spinner
         loadingElement.style.display = 'flex';
         progressText.textContent = "Loading scene...";
-    
+
         try {
-            console.log("load scene", exhibitModelPath);
-    
-            // Load the main model
-            const collider = await modelLoader.loadModel(exhibitModelPath);
-            collider.name = "exhibitCollider";
-    
-            // Update dependencies with loaded data
-            deps.params.exhibitCollider = collider;
-            deps.bgTexture = "/textures/bg_color.ktx2"; // Optional background texture
-            deps.bgInt = newFloor.userData.bgInt || 1;
-            deps.bgBlur = newFloor.userData.bgBlur || 0;
-    
-            // Move visitor to the scene and handle the background
-            visitor.moveToScene(visitor.exhibitScene, () => {
-                handleSceneBackground(deps);
-            });
-    
-            console.log("Scene loaded successfully");
+          console.log("Starting to load scene", exhibitModelPath);
+
+          // Load the main model
+          const collider = await modelLoader.loadModel(exhibitModelPath);
+          collider.name = "exhibitCollider";
+
+          // Update dependencies with loaded data
+          deps.params.exhibitCollider = collider;
+          deps.bgTexture = "/textures/bg_color.ktx2";
+          deps.bgInt = newFloor.userData.bgInt || 1;
+          deps.bgBlur = newFloor.userData.bgBlur || 0;
+
+          // Move visitor to the scene and handle the background
+          visitor.moveToScene(visitor.exhibitScene, () => {
+            handleSceneBackground(deps);
+          });
+
+          console.log("Scene loaded successfully");
+          progressText.textContent = "Scene loaded successfully.";
+
         } catch (error) {
-            console.error("Error loading scene:", error);
-            progressText.textContent = "Error loading scene.";
+          console.error("Error loading scene:", error);
+          progressText.textContent = "Error loading scene.";
         } finally {
-            // Hide the loading spinner after everything is done
-            loadingElement.style.display = 'none';
+          // Hide the loading spinner after everything is done
+          console.log("Hiding loading spinner");
+          loadingElement.style.display = 'none';
         }
-    }
-    
-    // Call loadScene and wait for it to complete
-    await loadScene();
-    
+      }
 
-      
-
+      // Call loadScene and wait for it to complete
       await loadScene();
 
     }
@@ -1063,27 +1083,5 @@ function preloadTextures() {
 
   return textureCache; // Return the cache for further use
 }
-const rotateOrbit = (angleDegrees) => {
-  const angleRadians = MathUtils.degToRad(angleDegrees);
 
-  // Calculate the camera's position relative to the controls target
-  const offset = camera.position.clone().sub(controls.target);
-
-  // Convert the offset to spherical coordinates
-  const spherical = new Spherical();
-  spherical.setFromVector3(offset);
-
-  // Adjust the azimuthal angle (horizontal rotation) by the specified angle
-  spherical.theta += angleRadians;
-
-  // Convert back to Cartesian coordinates
-  const newOffset = new Vector3().setFromSpherical(spherical);
-
-  // Update the camera's position and make it look at the target
-  camera.position.copy(controls.target).add(newOffset);
-  camera.lookAt(controls.target);
-
-  // Update controls to reflect the change
-  controls.update();
-};
 
