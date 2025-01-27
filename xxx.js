@@ -3,12 +3,17 @@
 
 
 import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
-import { Fog, AmbientLight, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
+import { Fog, AmbientLight, BufferGeometry, LoadingManager, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -61,6 +66,12 @@ if (params.isLowEndDevice) alert('You are using a device with low capabilities. 
 
 //
 const listener = new AudioListener();
+
+const gltfLoader = new GLTFLoader();
+const manager = new LoadingManager();
+const dracoLoader = new DRACOLoader(manager).setDecoderPath('./libs/draco/');
+
+//const meshoptDecoder = new MeshoptDecoder();
 
 
 
@@ -190,6 +201,8 @@ function init() {
 
   anisotropy = renderer.capabilities.getMaxAnisotropy();
 
+
+
   ktx2Loader.setTranscoderPath('./libs/basis/').detectSupport(renderer);
 
   // camera setup
@@ -279,6 +292,8 @@ function init() {
 
   const resetVisitor = () => {
 
+    console.log("reset visitor");
+
     visitor.visitorVelocity.set(0, 0, 0)
 
     const targetV = visitor.target.clone()
@@ -300,10 +315,12 @@ function init() {
     rotateOrbit(180);
   }
 
+  gltfLoader.setDRACOLoader(dracoLoader);
+  gltfLoader.setKTX2Loader(ktx2Loader);
+  gltfLoader.setMeshoptDecoder(MeshoptDecoder);
+  console.log('Loaders are set up successfully');
 
-  // audio setup
-  listener.position.set(0, 0, 0);
-  camera.add(listener);
+
 
   //
   deps = {
@@ -314,6 +331,7 @@ function init() {
     environment,
     renderer,
     ktx2Loader,
+    gltfLoader,
     gui,
     lightsToTurn,
     sceneMap,
@@ -335,14 +353,69 @@ function init() {
 
   visitor.mainScene.add(visitor)
 
+  //visitor.exhibitScene.add(visitor);
+
   visitor.mainScene.fog = new Fog(0x2b0a07, 3.1, 18);
 
-  //const ambientLight = new AmbientLight(0xFFF9E3, 5);
-  //visitor.mainScene.add(ambientLight);
+  //visitor.exhibitScene.fog = new Fog(0x2b0a07, 3.1, 18);
+
+  const ambientLight = new AmbientLight(0xFFF9E3, 20);
+  visitor.mainScene.add(ambientLight);
+
+
+  console.log("visitor.parent.name ....", visitor.parent.name);
 
   //
   addVisitorMapCircle();
 
+  const scene = visitor.parent;
+
+  ktx2Loader.load("/textures/bg_color.ktx2", (texture) => {
+
+    texture.mapping = EquirectangularReflectionMapping;
+    texture.colorSpace = SRGBColorSpace;
+
+    scene.background = texture;
+    scene.backgroundIntensity = 1;
+    scene.backgroundBlurriness = 0;
+
+    rotateOrbit(180);
+
+  });
+/*
+  const modelLoader = new ModelLoader(deps, visitor.exhibitScene);
+
+  visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
+
+  visitor.moveToScene(visitor.exhibitScene, () => {
+
+    
+
+  })
+
+
+  async function loadScene() {
+
+    let exhibitModelPath = "/models/cipriani_interior.glb"
+
+    
+
+    const collider = await modelLoader.loadModel(exhibitModelPath);
+    collider.name = "exhibitCollider";
+
+    deps.params.exhibitCollider = collider;
+    deps.bgTexture = "/textures/bg_color.ktx2" //newFloor.userData.bgTexture || "/textures/bg_color.ktx2";
+
+    console.log(deps.bgTexture);
+    deps.bgInt =  1;
+    deps.bgBlur =  0;
+
+    
+  }
+
+  loadScene();
+  */
+/*
   // composer
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(visitor.mainScene, camera));
@@ -351,6 +424,7 @@ function init() {
   effect1.uniforms['scale'].value = 10;
   composer.addPass(effect1);
 
+  */
 
   // LOAD MODEL (environment, collider)
   const modelLoader = new ModelLoader(deps, visitor.parent);
@@ -358,15 +432,17 @@ function init() {
   async function loadMainScene() {
     const scene = visitor.parent;
 
-    //params.archiveModelPath = "/models/cipriani_interior.glb"
+    params.archiveModelPath = "/models/cipriani_interior.glb"
 
     const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
+
+    console.log("load main", params.archiveModelPath)
 
     mainCollider.name = "mainCollider";
 
     deps.params.exhibitCollider = mainCollider;
 
-    ktx2Loader.load("/textures/galaktyka.ktx2", (texture) => {
+    ktx2Loader.load("/textures/bg_color.ktx2", (texture) => {
 
       texture.mapping = EquirectangularReflectionMapping;
       texture.colorSpace = SRGBColorSpace;
@@ -383,6 +459,8 @@ function init() {
   }
 
   loadMainScene();
+  
+
 
   textureCache = preloadTextures();
 
@@ -393,21 +471,12 @@ function init() {
   document
     .querySelector("img#audio-on")
     .addEventListener("pointerdown", (evt) => {
-        evt.preventDefault();
+      evt.preventDefault();
+      const intersectedFloor = visitor.checkLocation();
+      const audioHandler = new AudioHandler();
+      audioHandler.handleAudio(scene.getObjectByName(intersectedFloor.userData.audioToPlay));
 
-        // Get the intersected floor or context for audio playback
-        const intersectedFloor = visitor.checkLocation(); // Replace with actual logic
-
-        console.log("Intersected Floor:", intersectedFloor.userData.audioToPlay, audioObjects);
-        const audioHandler = new AudioHandler(audioObjects);
-
-        // Example: Determine the audio name dynamically based on context
-        const audioName = "ciprianiAudio"
-
-        audioHandler.handleAudio(audioName);
     });
-
-
 
   // optimized raycaster after click
   let pressTimeout = null; // To track the long press timeout
@@ -771,6 +840,8 @@ function init() {
 function handleSceneBackground(deps) {
   let { bgTexture, bgBlur, bgInt } = deps;
 
+  console.log("bgTexture", bgTexture, "bgInt", bgInt, "bgBlur", bgBlur);
+
   bgBlur = 0
   bgInt = 0.5
 
@@ -819,6 +890,11 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
+    return
+    
+
+    console.log("changed", result.newFloor.name);
+
     //if (result.newFloor.name !== "PodlogaSchodyPodest" && result.newFloor.name !== "floor_Cipriani") return;
 
     stopAnimation(); // Stop the current animation loop during the transition
@@ -833,18 +909,19 @@ async function updateVisitor(collider, delta) {
 
     if (newFloor.name === "FloorOut") {
 
+
+
       visitor.moveToScene(visitor.mainScene, () => {
         disposeSceneObjects(visitor.exhibitScene);
         deps.params.exhibitCollider = visitor.parent.getObjectByName("mainCollider")
 
+
+
+
+
       });
 
     } else {
-
-      if (visitor.exhibitScene.children.length !== 0) return;
-
-      console.log('newfloor', newFloor);
-
 
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
 
@@ -852,12 +929,15 @@ async function updateVisitor(collider, delta) {
 
       async function loadScene() {
 
+        console.log("load scene", exhibitModelPath);
+
         const collider = await modelLoader.loadModel(exhibitModelPath);
         collider.name = "exhibitCollider";
 
         deps.params.exhibitCollider = collider;
         deps.bgTexture = "/textures/bg_color.ktx2" //newFloor.userData.bgTexture || "/textures/bg_color.ktx2";
 
+        console.log(deps.bgTexture);
         deps.bgInt = newFloor.userData.bgInt || 1;
         deps.bgBlur = newFloor.userData.bgBlur || 0;
 
@@ -929,7 +1009,10 @@ function animate() {
   if (!visitor.parent) return;
 
   if (visitor.parent === visitor.mainScene) {
-    composer.render();
+    //composer.render();
+
+    renderer.render(visitor.parent, camera); // Render the exhibit scene
+
   } else {
     renderer.render(visitor.parent, camera); // Render the exhibit scene
   }
@@ -1010,6 +1093,10 @@ function preloadTextures() {
   const textureFiles = [
     'bg_color.ktx2',
     'galaktyka.ktx2',
+    'equMap_podMostem.ktx2',
+    'bg_white.ktx2',
+    'bg_lockdowns.ktx2',
+    'dystopia/bgVermeerViewofDelft.ktx2'
   ];
 
   // Iterate over the texture files and load each one

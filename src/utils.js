@@ -42,27 +42,38 @@ export function disposeSceneObjects(scene) {
   }
 
   export class AudioHandler {
-    handleAudio(audioToTurn) {
-      const audioOn = document.querySelector("#audio-on");
-  
-      if (!audioToTurn || audioToTurn.type !== "Audio") {
-        audioOn.src = "/icons/audioMuted.png";
-        audioOn.style.display = "none";
-        audioObjects.forEach(el => el.children[0].pause());
-        return;
-      }
-  
-      if (audioToTurn.isPlaying) {
-        audioToTurn.stop();
-        audioOn.style.display = "block";
-        audioOn.src = "/icons/audioMuted.png";
-      } else {
-        audioToTurn.play();
-        audioOn.style.display = "block";
-        audioOn.src = "/icons/audioButton.png";
-      }
+    constructor(audioObjects) {
+        this.audioObjects = audioObjects; // Store the audio objects reference
     }
-  }
+
+    handleAudio(audioName) {
+        const audioOn = document.querySelector("img#audio-on");
+
+        // Find the audio object by name
+        const audioToTurn = this.audioObjects.find((audio) => audio.name === audioName);
+
+        // If no valid audio object is found
+        if (!audioToTurn || audioToTurn.type !== "Audio") {
+            audioOn.src = "/icons/audioMuted.png";
+            audioOn.style.display = "none";
+            this.audioObjects.forEach((el) => el.pause()); // Pause all audio
+            return;
+        }
+
+        // Toggle the audio playback
+        if (audioToTurn.isPlaying) {
+            audioToTurn.stop();
+            audioOn.src = "/icons/audioMuted.png";
+        } else {
+            audioToTurn.play();
+            audioOn.src = "/icons/audioButton.png";
+        }
+
+        audioOn.style.display = "block";
+    }
+}
+
+
 
   export function handleAudio(intersectedFloor, audioHandler) {
     if (intersectedFloor.userData.audioToPlay) {

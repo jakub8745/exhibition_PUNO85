@@ -1,4 +1,6 @@
-import { Group, Box3, Mesh, MeshBasicMaterial, LoadingManager } from 'three';
+import { Group, Box3, Mesh, MeshBasicMaterial, LoadingManager, PositionalAudio,AudioLoader } from 'three';
+import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
+
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
@@ -27,6 +29,9 @@ class ModelLoader {
 
         this.meshoptDecoder = MeshoptDecoder;
 
+        this.ktx2Loader = deps.ktx2Loader.setTranscoderPath('./libs/basis/');
+
+
         this.exhibits = [];
 
         this.ktx2Loader = deps.ktx2Loader.setTranscoderPath('./libs/basis/');
@@ -35,170 +40,171 @@ class ModelLoader {
         this.box = new Box3();
         this.mainScene = deps.visitor.mainScene; //
 
+        this.setupLoaders();
+
+       
+
+
+
     }
 
     async loadModel(modelPath) {
-
-        const loadingElement = document.getElementById('loading'); // Spinner container
-
+        const loadingElement = document.getElementById('loading');
         const progressText = document.getElementById('progress-text');
+
+        // Display the loading spinner
         loadingElement.style.display = 'flex';
 
         try {
-            // Show the spinner
-        
-            this.gltfLoader.setDRACOLoader(this.dracoLoader);
-            this.gltfLoader.setKTX2Loader(this.ktx2Loader);
-            this.gltfLoader.setMeshoptDecoder(this.meshoptDecoder);
-        
-            let currentModel = 1; // Track the current model being loaded
-            const totalModels = this.newFloor && this.newFloor.userData.exhibitObjectsPath ? 2 : 1;
-        
-            // Add progress listener
-            const onProgress = (xhr) => {
-                if (xhr.total) {
-                    const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
-                    progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
-        
-                    if (xhr.loaded === xhr.total) {
+            //this.setupLoaders();
 
-                        loadingElement.style.display = 'none';
-                    }
-                }
-            };
+            const totalModels = this.newFloor?.userData.exhibitObjectsPath ? 2 : 1;
+            let currentModel = 1;
 
-            // .log("modelPath", modelPath);
-        
-            const { scene: gltfScene } = await this.gltfLoader.loadAsync(modelPath, onProgress);
-        
-          
-        
-            gltfScene.updateMatrixWorld(true);
+            // Load the main model
+            const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels, progressText);
 
-         
+            // Adjust floor if necessary
+            this.adjustFloor(gltfScene);
 
-            if (this.newFloor) {
-                gltfScene.traverse((c) => {
-                    if (c.isMesh && c.name === "FloorOut") {
-                        c.position.y -= 0.1;
-                    }
-                });
-        
-                if (this.newFloor.userData.exhibitObjectsPath) {
-
-                
-
-                    //console.log("this.newFloor.userData.exhibitObjectsPath", this.newFloor.userData.exhibitObjectsPath);
-
-                    const { scene: exhibitObjects } = await this.gltfLoader.loadAsync('/models/cipriani_objects.glb', onProgress);
-                    
-                    exhibitObjects.traverse((object) => {
-
-                        if (object.isMesh) {
-                            object.wireframe = true;
-                            object.material.transparent = true;
-                            object.material.opacity = 0.0; // Make the material invisible
-                            object.interactive = true;  // Custom property for filtering interactive objects
-                        }
-                    });
-
-                    // feature objects: 3Dtext, Video, Image, Audio, 3Dmodel
-                    
-                    
-                    gltfScene.add(exhibitObjects);
-                  
-
-                }
+            // Load exhibit objects if applicable
+            if (this.newFloor?.userData.exhibitObjectsPath) {
+                currentModel++;
+                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', currentModel, totalModels, progressText);
+                this.processExhibitObjects(exhibitObjects);
+                gltfScene.add(exhibitObjects);
             }
-        
-            // Process scene objects
-            gltfScene.traverse((c) => {
-                if (c.isMesh || c.isLight) {
-                    if (c.isLight) {
-                        c.visible = false;
-                    }
-                    this.typeOfmesh = c.userData.type;
-                    this.toMerge[this.typeOfmesh] = this.toMerge[this.typeOfmesh] || [];
-                    this.toMerge[this.typeOfmesh].push(c);
-                }
-            });
-        
-            // Merge objects
-            for (const typeOfmesh in this.toMerge) {
-                const arr = this.toMerge[typeOfmesh];
-                arr.forEach((mesh) => {
-                    if (mesh.userData.name !== "VisitorEnter") {
-                        this.environment.attach(mesh);
-                    }else(console.log("VisitorEnter", mesh));
-                });
-            }
-        
-            this.environment.name = "environment";
-        
-            // Generate the collider
-            const staticGenerator = new StaticGeometryGenerator(this.environment);
-            staticGenerator.attributes = ["position"];
-        
-            const mergedGeometry = staticGenerator.generate();
-            mergedGeometry.boundsTree = new MeshBVH(mergedGeometry, {
-                lazyGeneration: false,
-            });
-        
-            this.collider = new Mesh(mergedGeometry);
-            this.collider.material.wireframe = true;
-            this.collider.material.opacity = 0;
-            this.collider.material.transparent = true;
-        
-            this.collider.name = "collider";
-            this.collider.visible = false;
-        
-            this.scene.add(this.collider);
-            this.deps.collider = this.collider;
-        
+
+            this.processSceneObjects(gltfScene);
+
+            const collider = this.createCollider();
+            this.scene.add(collider);
+            this.deps.collider = collider;
+
             this.scene.add(this.environment);
-        
-            // Additional object customization
-            this.environment.traverse((c) => {
-                /*
-                if (c.isLight || c.isMesh) {
-                    const options = {
-                        gizmoVisible: this.deps.params.gizmoVisible,
-                        ktx2Loader: this.ktx2Loader,
-                        environment: this.deps.environment,
-                        lightsToTurn: this.deps.lightsToTurn,
-                        scene: this.scene,
-                        receiveShadow: this.deps.receiveShadow,
-                        castShadow: this.deps.castShadow,
-                        gui: this.deps.gui,
-                        control: this.deps.control,
-                        listener: this.deps.listener,
-                        audioObjects: this.deps.audioObjects,
-                        isLowEndDevice: this.deps.params.isLowEndDevice,
-                        gizmoVisible: this.deps.params.gizmoVisible,
-                        transControlsMode: this.deps.params.transControlsMode,
-                    };
-                   // modifyObjects[c.userData.type]?.(c, options);
-                }
-        */
-                if (this.scene.name === "mainScene" &&
-                    (/Wall|visitorLocation|Room/.test(c.userData.name) ||
-                        /visitorLocation|Room/.test(c.userData.type))) {
-                    this.addToSceneMap(c);
-                }
-            });
-        
+
+            this.customizeEnvironment();
             this.addToSceneMapRun = true;
-        
-            return this.collider;
-        
+
+            return collider;
+
         } catch (error) {
             console.error('Error loading model:', error);
             throw error;
+        } finally {
+            // Hide the loading spinner
+            loadingElement.style.display = 'none';
         }
-        
-        
-        
     }
+
+    // Helper function to set up loaders
+    setupLoaders() {
+        this.gltfLoader.setDRACOLoader(this.dracoLoader);
+        this.gltfLoader.setKTX2Loader(this.ktx2Loader);
+        this.gltfLoader.setMeshoptDecoder(this.meshoptDecoder);
+    }
+
+    // Helper function to load GLTF model
+    async loadGLTFModel(modelPath, currentModel, totalModels, progressText) {
+        const onProgress = (xhr) => {
+            if (xhr.total) {
+                const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
+                progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
+            }
+        };
+
+        const { scene: gltfScene } = await this.gltfLoader.loadAsync(modelPath, onProgress);
+        gltfScene.updateMatrixWorld(true);
+        return gltfScene;
+    }
+
+    // Helper function to adjust floor
+    adjustFloor(gltfScene) {
+        gltfScene.traverse((object) => {
+            if (object.isMesh && object.name === "FloorOut") {
+                object.position.y -= 0.1;
+            }
+        });
+    }
+
+    // Helper function to process exhibit objects
+    processExhibitObjects(exhibitObjects) {
+        exhibitObjects.traverse((object) => {
+            if (object.isMesh) {
+                object.wireframe = true;
+                object.material.transparent = true;
+                object.material.opacity = 0.0;
+                object.interactive = true;
+            }
+        });
+    }
+
+    // Helper function to process scene objects
+    processSceneObjects(gltfScene) {
+        gltfScene.traverse((object) => {
+            if (object.isMesh || object.isLight) {
+                if (object.isLight) object.visible = false;
+
+                const meshType = object.userData.type;
+                this.toMerge[meshType] = this.toMerge[meshType] || [];
+                this.toMerge[meshType].push(object);
+            }
+        });
+
+        this.mergeSceneObjects();
+    }
+
+    // Helper function to merge scene objects
+    mergeSceneObjects() {
+        for (const meshType in this.toMerge) {
+            const objects = this.toMerge[meshType];
+            objects.forEach((mesh) => {
+                if (mesh.userData.name !== "VisitorEnter" && mesh.userData.name !== "ciprianiAudio") {
+                    this.environment.attach(mesh);
+                } else if (mesh.userData.name === "ciprianiAudio"){
+                    //
+                    console.log("ciprianiAudio znaleziony", mesh.userData);
+
+                    this.createAudio(mesh);
+                    this.environment.attach(mesh);
+
+                } else {
+                    console.log("VisitorEnter znaleziony", mesh);
+                }
+            });
+        }
+        this.environment.name = "environment";
+    }
+
+    // Helper function to create collider
+    createCollider() {
+        const staticGenerator = new StaticGeometryGenerator(this.environment);
+        staticGenerator.attributes = ["position"];
+
+        const mergedGeometry = staticGenerator.generate();
+        mergedGeometry.boundsTree = new MeshBVH(mergedGeometry, { lazyGeneration: false });
+
+        const collider = new Mesh(mergedGeometry);
+        collider.material.wireframe = true;
+        collider.material.opacity = 0;
+        collider.material.transparent = true;
+        collider.name = "collider";
+        collider.visible = false;
+
+        return collider;
+    }
+
+    // Helper function to customize environment
+    customizeEnvironment() {
+        this.environment.traverse((object) => {
+            if (this.scene.name === "mainScene" &&
+                (/Wall|visitorLocation|Room/.test(object.userData.name) ||
+                    /visitorLocation|Room/.test(object.userData.type))) {
+                this.addToSceneMap(object);
+            }
+        });
+    }
+
 
 
 
@@ -241,6 +247,40 @@ class ModelLoader {
 
         }
     }
+
+    createAudio(mesh) {
+
+        console.log("ciprianiAudio znaleziony", mesh.userData);
+        // Scale the mesh for the audio icon or object
+        mesh.scale.setScalar(0.1);
+    
+        // Create positional audio
+        const sound = new PositionalAudio(this.deps.listener);
+        const audioLoader = new AudioLoader();
+    
+        // Load the audio file
+        audioLoader.load(mesh.userData.audio, (buffer) => {
+            sound.name = 'trembitaAudio'; // Assign name to the audio
+            sound.setBuffer(buffer);
+            sound.setLoop(true);
+            sound.setRefDistance(mesh.userData.audioRefDistance);
+            sound.setRolloffFactor(mesh.userData.audioRolloffFactor);
+            sound.setVolume(mesh.userData.audioVolume);
+            sound.setDirectionalCone(10, 23, 0.1);
+    
+            // Add positional audio helper (for visualization during development)
+            const helper = new PositionalAudioHelper(sound, 20);
+            sound.add(helper);
+    
+            // Attach sound to the mesh
+            mesh.add(sound);
+    
+            // Add the audio object to the shared array
+            this.deps.audioObjects.push(sound);
+        });
+    }
+    
+    
 }
 
 export default ModelLoader;
