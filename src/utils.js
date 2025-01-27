@@ -42,36 +42,55 @@ export function disposeSceneObjects(scene) {
   }
 
   export class AudioHandler {
-    constructor(audioObjects) {
-        this.audioObjects = audioObjects; // Store the audio objects reference
+    constructor() {
+      this.audioObjects = [];
     }
-
-    handleAudio(audioName) {
-        const audioOn = document.querySelector("img#audio-on");
-
-        // Find the audio object by name
-        const audioToTurn = this.audioObjects.find((audio) => audio.name === audioName);
-
-        // If no valid audio object is found
-        if (!audioToTurn || audioToTurn.type !== "Audio") {
-            audioOn.src = "/icons/audioMuted.png";
-            audioOn.style.display = "none";
-            this.audioObjects.forEach((el) => el.pause()); // Pause all audio
-            return;
-        }
-
-        // Toggle the audio playback
-        if (audioToTurn.isPlaying) {
-            audioToTurn.stop();
-            audioOn.src = "/icons/audioMuted.png";
-        } else {
-            audioToTurn.play();
-            audioOn.src = "/icons/audioButton.png";
-        }
-
-        audioOn.style.display = "block";
+    handleAudio(audioToTurn) {
+      if (!audioToTurn || audioToTurn.type !== "Audio") {
+        this.pauseAllAndUpdateIcons();
+        return;
+      }
+  
+      const { isPlaying } = audioToTurn;
+      const { playIconImg, audioOn } = this.getIconsAndPlayIconImg();
+  
+      if (isPlaying) {
+        playIconImg.src = "/icons/audioMuted.png";
+        audioOn.src = "/icons/audioMuted.png";
+        audioToTurn.stop();
+      } else {
+        audioToTurn.play();
+        playIconImg.src = "/icons/audioButton.png";
+        audioOn.src = "/icons/audioButton.png";
+        this.removeAudioPlayOverlay();
+      }
     }
-}
+  
+    pauseAllAndUpdateIcons() {
+      for (const el of this.audioObjects) {
+  
+        if (!el.children[0]) return
+  
+        el.children[0].pause();
+      }
+      const { playIconImg, audioOn } = this.getIconsAndPlayIconImg();
+      playIconImg.src = "/icons/audioMuted.png";//   icons/audioMuted.png
+      audioOn.src = "/icons/audioMuted.png";
+    }
+  
+    getIconsAndPlayIconImg() {
+      const playIconImg = document.querySelector("#play-icon img");
+      const audioOn = document.querySelector("#audio-on");
+      return { playIconImg, audioOn };
+    }
+  
+    removeAudioPlayOverlay() {
+      const element = document.querySelector(".overlay-for-audio-play");
+      if (element) element.remove();
+    }
+  
+  
+  }
 
 
 

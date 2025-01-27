@@ -375,7 +375,7 @@ function init() {
       scene.backgroundIntensity = 1;
       scene.backgroundBlurriness = 0;
 
-      rotateOrbit(180);
+      //rotateOrbit(180);
 
     });
 
@@ -389,24 +389,34 @@ function init() {
   const loadingElement = document.getElementById('loading'); // Spinner container
 
   loadingElement.style.display = 'none';
+
   // events
+
+  document
+    .querySelector("#play-icon")
+    .addEventListener("pointerdown", (evt) => {
+      evt.preventDefault();
+      const floorChecker = new VisitorLocationChecker(scene);
+      const audioHandler = new AudioHandler();
+      const el = floorChecker.checkVisitorLocation(visitor);
+      audioHandler.handleAudio(scene.getObjectByName(el.userData.audioToPlay));
+    });
+
   document
     .querySelector("img#audio-on")
     .addEventListener("pointerdown", (evt) => {
-        evt.preventDefault();
+      evt.preventDefault();
+      
 
-        // Get the intersected floor or context for audio playback
-        const intersectedFloor = visitor.checkLocation(); // Replace with actual logic
+      const el = visitor.checkLocation();
+      //const el = floorChecker.name
 
-        console.log("Intersected Floor:", intersectedFloor.userData.audioToPlay, audioObjects);
-        const audioHandler = new AudioHandler(audioObjects);
+      console.log('floorChecker', el);
 
-        // Example: Determine the audio name dynamically based on context
-        const audioName = "ciprianiAudio"
-
-        audioHandler.handleAudio(audioName);
+      const audioHandler = new AudioHandler();
+      //const el = floorChecker.checkVisitorLocation(visitor);
+      audioHandler.handleAudio(visitor.parent.getObjectByName(el.userData.audioToPlay));
     });
-
 
 
   // optimized raycaster after click

@@ -12,7 +12,7 @@
       padding: 0;
       margin: 0;
       overflow: hidden;
-      
+
     }
 
     #overlay {
@@ -90,8 +90,8 @@
 
   <img id="audio-on" alt="PLAY/STOP AUDIO" src="/icons/audioMuted.png" />
   <div id="experimental">***EXPERIMENTAL PROJECT beta v2 *** 3d interface focused on showing an archived ARTWORKS not on
-    realistic representation of the gallery rooms. 
-    </div>
+    realistic representation of the gallery rooms.
+  </div>
 
   <div id="loading">
     <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -109,6 +109,7 @@
     <p id="progress-text">Loading: 0%</p>
   </div>
 
+  <div class="overlay-for-audio-play"></div>
 
 
 
@@ -127,9 +128,9 @@
         </a>
       </li>
 
-      <!--
 
-         <li>
+
+      <li>
         <a href="#" id="play-icon">
           <span class="links_name">
             <img alt="PLAY/STOP AUDIO" src="/icons/audioMuted.png" />
@@ -137,7 +138,7 @@
         </a>
       </li>
 
-      -->
+
 
       <li>
         <a href="#" id="map-icon" data-divid="map_in_sidebar">
@@ -232,7 +233,7 @@
       </li>
     </ul>
   </div>
-  
+
   <div id="modalOverlay" class="modal-overlay hidden">
     <div class="modal">
       <button class="modal-close" id="closeModal">×</button>
@@ -240,12 +241,14 @@
         <img src="https://via.placeholder.com/1200x800" alt="Example Image">
       </div>
       <div class="modal-description">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua.
       </div>
     </div>
   </div>
-  
+
 
   <!-- Video -->
   <video id="videoUnreal" loop crossorigin="anonymous" playsinline style="display: none">
