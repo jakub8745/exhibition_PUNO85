@@ -98,7 +98,7 @@ BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 const gui = new GUI();
-gui.show();
+gui.show(false);
 
 
 // Joystick 
@@ -269,8 +269,8 @@ function init() {
   //sceneMap.add(light);
 
   // stats setup
-  stats = new Stats();
-  document.body.appendChild(stats.dom);
+  //stats = new Stats();
+  //document.body.appendChild(stats.dom);
 
   const resetVisitor = () => {
 
@@ -633,9 +633,11 @@ function init() {
   });
 
   // publications
+ 
   document.querySelector("#books-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    handleSBbuttonsClick(e.target.getAttribute("data-divid"));
+    let newWindow = window.open();
+    newWindow.location.assign("https://zenodo.org/records/14743890");
   });
 
   // archive's map
@@ -1007,7 +1009,7 @@ function animate() {
   if (!deps.params.exhibitCollider) return;
   const collider = deps.params.exhibitCollider;
 
-  stats.update();
+  //stats.update();
   TWEEN.update();
 
   const delta = Math.min(clock.getDelta(), 0.1);

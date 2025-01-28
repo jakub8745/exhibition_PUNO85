@@ -729,4 +729,8 @@ li.text_in_sidebar.open canvas.open {
   }
 }
 
-
+#overlay p{
+  top: 5em;
+  position: relative;
+  left: 2em;
+}

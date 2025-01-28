@@ -15,7 +15,7 @@ class ModelLoader {
 
     constructor(deps, scene, newFloor) {///
 
-        this.addToSceneMapRun = false;
+        this.addToSceneMapRun = true;
         this.deps = deps;
         this.collider = null;
         this.scene = scene;
@@ -53,6 +53,11 @@ class ModelLoader {
     }
 
     async loadModel(modelPath) {
+
+        console.log('scene', this.scene.name);
+
+        if (this.scene.name === 'exhibitScene') this.addToSceneMapRun = false;
+
         //const loadingElement = document.getElementById('loading');
         //const progressText = document.getElementById('progress-text');
 
@@ -97,6 +102,7 @@ class ModelLoader {
 
             // Customize the environment and finalize setup
             this.customizeEnvironment();
+
             this.addToSceneMapRun = true;
 
             return collider;
@@ -224,7 +230,7 @@ class ModelLoader {
     // Helper function to customize environment
     customizeEnvironment() {
         this.environment.traverse((object) => {
-            if (this.scene.name === "mainScene" &&
+            if (this.scene.name === "exhibitScene" &&
                 (/Wall|visitorLocation|Room/.test(object.userData.name) ||
                     /visitorLocation|Room/.test(object.userData.type))) {
                 this.addToSceneMap(object);
