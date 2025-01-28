@@ -8,6 +8,8 @@ body {
   /* Disable user selection on other browsers */
   touch-action: manipulation;
   /* Disable default touch actions */
+  font-family: "Lora", serif;
+  font-optical-sizing: auto;
 }
 
 
@@ -626,7 +628,7 @@ li.text_in_sidebar.open canvas.open {
 /* Description */
 .modal-description {
   padding: 15px 20px;
-  font-size: 16px;
+  font-size: 1.3em;
   line-height: 1.5;
   color: #333;
   height: 120px;
@@ -636,31 +638,43 @@ li.text_in_sidebar.open canvas.open {
 
 /* Horizontal image styling */
 .modal-image-container img.horizontal {
-  flex: 3; /* Prioritize space for the image */
-  max-height: 85vh; /* Ensure it uses maximum vertical space */
-  width: auto; /* Maintain aspect ratio */
+  flex: 3;
+  /* Prioritize space for the image */
+  max-height: 85vh;
+  /* Ensure it uses maximum vertical space */
+  width: auto;
+  /* Maintain aspect ratio */
   object-fit: contain;
 }
 
 .modal-description.horizontal {
-  flex: 1; /* Allow description to take minimal space */
-  max-height: 85vh; /* Ensure it doesn’t exceed modal height */
-  overflow-y: auto; /* Make description scrollable */
+  flex: 1;
+  /* Allow description to take minimal space */
+  max-height: 85vh;
+  /* Ensure it doesn’t exceed modal height */
+  overflow-y: auto;
+  /* Make description scrollable */
   padding: 15px;
 }
 
 /* Vertical image styling */
 .modal-image-container img.vertical {
-  flex: 4; /* Give the image even more priority */
-  max-height: 85vh; /* Maximize image size vertically */
-  width: auto; /* Maintain aspect ratio */
+  flex: 4;
+  /* Give the image even more priority */
+  max-height: 85vh;
+  /* Maximize image size vertically */
+  width: auto;
+  /* Maintain aspect ratio */
   object-fit: contain;
 }
 
 .modal-description.vertical {
-  flex: 1; /* Secondary to the image */
-  max-height: 85vh; /* Constrain to modal height */
-  overflow-y: auto; /* Make scrollable if needed */
+  flex: 1;
+  /* Secondary to the image */
+  max-height: 85vh;
+  /* Constrain to modal height */
+  overflow-y: auto;
+  /* Make scrollable if needed */
   padding: 15px;
 }
 
@@ -668,19 +682,23 @@ li.text_in_sidebar.open canvas.open {
 @media (orientation: landscape) {
   .modal {
     display: flex;
-    flex-direction: row; /* Arrange image and description side by side */
+    flex-direction: row;
+    /* Arrange image and description side by side */
   }
 
   .modal-image-container {
-    flex: 4; /* The container gives priority to the image */
+    flex: 4;
+    /* The container gives priority to the image */
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .modal-description {
-    flex: 1; /* Secondary to the image */
-    overflow-y: auto; /* Scrollable */
+    flex: 1;
+    /* Secondary to the image */
+    overflow-y: auto;
+    /* Scrollable */
     padding: 20px;
     height: auto;
   }
@@ -690,19 +708,25 @@ li.text_in_sidebar.open canvas.open {
 @media (orientation: portrait) {
   .modal {
     display: flex;
-    flex-direction: column; /* Stack image and description */
+    flex-direction: column;
+    /* Stack image and description */
   }
 
   .modal-image-container {
-    flex: 3; /* Image gets priority */
+    flex: 3;
+    /* Image gets priority */
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .modal-description {
-    flex: 1; /* Description is secondary */
-    overflow-y: auto; /* Scrollable */
+    flex: 1;
+    /* Description is secondary */
+    overflow-y: auto;
+    /* Scrollable */
     padding: 15px;
   }
 }
+
+

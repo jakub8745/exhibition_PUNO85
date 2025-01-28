@@ -46,21 +46,23 @@ export function disposeSceneObjects(scene) {
       this.audioObjects = [];
     }
     handleAudio(audioToTurn) {
+
+      console.log("audioToTurn", audioToTurn);
       if (!audioToTurn || audioToTurn.type !== "Audio") {
         this.pauseAllAndUpdateIcons();
         return;
       }
   
       const { isPlaying } = audioToTurn;
-      const { playIconImg, audioOn } = this.getIconsAndPlayIconImg();
+      const audioOn = document.querySelector("#audio-on");
   
       if (isPlaying) {
-        playIconImg.src = "/icons/audioMuted.png";
         audioOn.src = "/icons/audioMuted.png";
         audioToTurn.stop();
+
       } else {
+
         audioToTurn.play();
-        playIconImg.src = "/icons/audioButton.png";
         audioOn.src = "/icons/audioButton.png";
         this.removeAudioPlayOverlay();
       }
@@ -73,16 +75,11 @@ export function disposeSceneObjects(scene) {
   
         el.children[0].pause();
       }
-      const { playIconImg, audioOn } = this.getIconsAndPlayIconImg();
-      playIconImg.src = "/icons/audioMuted.png";//   icons/audioMuted.png
+      const audioOn = document.querySelector("#audio-on");
       audioOn.src = "/icons/audioMuted.png";
     }
   
-    getIconsAndPlayIconImg() {
-      const playIconImg = document.querySelector("#play-icon img");
-      const audioOn = document.querySelector("#audio-on");
-      return { playIconImg, audioOn };
-    }
+ 
   
     removeAudioPlayOverlay() {
       const element = document.querySelector(".overlay-for-audio-play");

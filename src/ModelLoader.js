@@ -1,4 +1,4 @@
-import { Group, Box3, Mesh, MeshBasicMaterial, LoadingManager, PositionalAudio, AudioLoader } from 'three';
+import { Group, Box3, Mesh, MeshBasicMaterial, MathUtils,LoadingManager, PositionalAudio, AudioLoader } from 'three';
 import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
 
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -7,6 +7,8 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { MeshBVH, StaticGeometryGenerator } from "three-mesh-bvh";
 //import { modifyObjects } from './modifyObjects.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+
 
 
 class ModelLoader {
@@ -42,6 +44,8 @@ class ModelLoader {
 
         this.setupLoaders();
 
+        this.gui = deps.gui;
+
 
 
 
@@ -51,26 +55,26 @@ class ModelLoader {
     async loadModel(modelPath) {
         //const loadingElement = document.getElementById('loading');
         //const progressText = document.getElementById('progress-text');
-    
+
         // Show the loading spinner
         //loadingElement.style.display = 'flex';
         //progressText.textContent = "Preparing to load...";
-    
+
         // Ensure the DOM update happens before loading starts
         //await new Promise((resolve) => requestAnimationFrame(resolve));
-    
+
         try {
             //const totalModels = this.newFloor?.userData.exhibitObjectsPath ? 2 : 1;
             let currentModel = 2;
             const totalModels = 2;
-    
+
             // Load the main model
-           // progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
+            // progressText.textContent = `Loading model ${currentModel}/${totalModels}...`;
             const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels);
-    
+
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
-    
+
             // Load exhibit objects if applicable
             if (this.newFloor?.userData.exhibitObjectsPath) {
                 currentModel++;
@@ -79,38 +83,38 @@ class ModelLoader {
                 this.processExhibitObjects(exhibitObjects);
                 gltfScene.add(exhibitObjects);
             }
-    
+
             // Process scene objects
             this.processSceneObjects(gltfScene);
-    
+
             // Create and add colliders
             const collider = this.createCollider();
             this.scene.add(collider);
             this.deps.collider = collider;
-    
+
             // Add environment to the scene
             this.scene.add(this.environment);
-    
+
             // Customize the environment and finalize setup
             this.customizeEnvironment();
             this.addToSceneMapRun = true;
-    
+
             return collider;
-    
+
         } catch (error) {
             console.error('Error loading model:', error);
             //progressText.textContent = 'Error loading model.';
             throw error;
-    
+
         } finally {
             await Promise.allSettled([
                 // Add any other async tasks to wait for here
             ]);
-        
+
             //loadingElement.style.display = 'none';
         }
     }
-    
+
 
 
     // Helper function to load GLTF model
@@ -272,7 +276,6 @@ class ModelLoader {
     }
 
     createAudio(mesh) {
-
         // Scale the mesh for the audio icon or object
         mesh.scale.setScalar(0.1);
 
@@ -299,8 +302,16 @@ class ModelLoader {
 
             // Add the audio object to the shared array
             this.deps.audioObjects.push(sound);
+
+            mesh.rotateX(Math.PI / 2);
+            const radians = MathUtils.degToRad(120);
+            mesh.rotation.y += radians;
+
+
+
         });
     }
+
 
 
 }

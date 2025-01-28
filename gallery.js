@@ -98,7 +98,7 @@ BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
 const gui = new GUI();
-gui.show(false);
+gui.show();
 
 
 // Joystick 
@@ -506,74 +506,74 @@ function init() {
             video.paused ? video.play() : video.pause();
             break;
 
-            case 'Floor':
-              case 'visitorLocation':
-              case 'Room': {
-                  const { distance, point } = clickedObject;
-              
-                  let pulseTween;
-              
-                  circle = visitor.parent.getObjectByName('circle');
-                  if (!circle) addPointerCircle();
-              
-                  clickedPoint.copy(point);
-                  visitorPos.copy(visitor.position.clone());
-              
-                  clickedPoint.y += 0.1; // Slight offset for visibility
-              
-                 
+          case 'Floor':
+          case 'visitorLocation':
+          case 'Room': {
+            const { distance, point } = clickedObject;
+
+            let pulseTween;
+
+            circle = visitor.parent.getObjectByName('circle');
+            if (!circle) addPointerCircle();
+
+            clickedPoint.copy(point);
+            visitorPos.copy(visitor.position.clone());
+
+            clickedPoint.y += 0.1; // Slight offset for visibility
 
 
-              
-                  // Stop any existing pulseTween to prevent conflicts
-                  if (pulseTween) {
-                    pulseTween.stop();
-                    pulseTween = null;
-                }
 
-                 // Reset circle properties
-                 circle.position.copy(clickedPoint);
-                 circle.scale.set(1, 1, 1); // Reset scale to full size
-                 circle.visible = true;
-              
-                  // Visitor movement tween
-                  const tweenTarget = { x: visitorPos.x, z: visitorPos.z };
-                  tween = new TWEEN.Tween(tweenTarget)
-                      .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
-                      .onUpdate(({ x, z }) => {
 
-                          visitor.position.set(x, visitor.position.y, z);
-                          visitor.updateMatrixWorld();
-                      })
-                      .onComplete(() => {
-                          circle.visible = false; // Hide circle after movement completes
-                          tween = null; // Clear tween reference
-                          pulseTween = null; // Clear pulseTween reference
-                      });
-              
-                  tween.start();
-              
-                  // Pulse animation for circle
-                  pulseTween = new TWEEN.Tween({ scale: 1 })
-                      .to({ scale: 0.4 }, 600)
-                      .repeat(Infinity)
-                      .yoyo(true)
-                      .easing(TWEEN.Easing.Quadratic.InOut) // Smooth easing for scaling
-                      .onUpdate(({ scale }) => {
 
-                        console.log('Active tweens:', TWEEN.getAll().length);
+            // Stop any existing pulseTween to prevent conflicts
+            if (pulseTween) {
+              pulseTween.stop();
+              pulseTween = null;
+            }
 
-                          circle.scale.set(scale, scale, scale); // Update circle scale
-                      })
-                      .onStop(() => {
-                          circle.visible = false; // Ensure the circle is hidden on stop
-                          pulseTween = null; // Clear pulseTween reference
-                      });
-              
-                  pulseTween.start();
-                  break;
-              }
-              
+            // Reset circle properties
+            circle.position.copy(clickedPoint);
+            circle.scale.set(1, 1, 1); // Reset scale to full size
+            circle.visible = true;
+
+            // Visitor movement tween
+            const tweenTarget = { x: visitorPos.x, z: visitorPos.z };
+            tween = new TWEEN.Tween(tweenTarget)
+              .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
+              .onUpdate(({ x, z }) => {
+
+                visitor.position.set(x, visitor.position.y, z);
+                visitor.updateMatrixWorld();
+              })
+              .onComplete(() => {
+                circle.visible = false; // Hide circle after movement completes
+                tween = null; // Clear tween reference
+                pulseTween = null; // Clear pulseTween reference
+              });
+
+            tween.start();
+
+            // Pulse animation for circle
+            pulseTween = new TWEEN.Tween({ scale: 1 })
+              .to({ scale: 0.4 }, 600)
+              .repeat(Infinity)
+              .yoyo(true)
+              .easing(TWEEN.Easing.Quadratic.InOut) // Smooth easing for scaling
+              .onUpdate(({ scale }) => {
+
+                console.log('Active tweens:', TWEEN.getAll().length);
+
+                circle.scale.set(scale, scale, scale); // Update circle scale
+              })
+              .onStop(() => {
+                circle.visible = false; // Ensure the circle is hidden on stop
+                pulseTween = null; // Clear pulseTween reference
+              });
+
+            pulseTween.start();
+            break;
+          }
+
 
           default:
             break;
@@ -767,14 +767,28 @@ function init() {
         control.setMode("rotate");
         break;
       case "t":
-        console.log("visitor.position", visitor.position);
+        visitor.parent.traverse((object) => {
+          if (object.name === "trembitaAudio") {
+            const sound = object;
+
+            console.log(object);
+
+            gui.add(sound.panner, "coneInnerAngle", 0, 500, 0.01).name("Inner")// + mesh.name);refDistance
+            gui.add(sound.panner, "coneOuterAngle", 0, 500, 0.01).name("Outer")
+            gui.add(sound.panner, "coneOuterGain", 0, 1, 0.01).name("Outer")
+            gui.add(sound.panner, "refDistance", 0, 10, 0.01).name("refDistance")
+            gui.add(sound.panner, "rolloffFactor", 0, 100, 0.01).name("rolloffFactor")
+
+            //gui.add(mesh.rotation, "y", 0, 10, 0.01).name("RotateY")
+            //gui.add(mesh.rotation, "x", 0, 10, 0.01).name("Rotatex")
 
 
+            gui.open();
 
-        // Function to rotate orbit
 
-
-        rotateOrbit(180);
+          }
+          //console.log(object);
+        });
 
         break;
       case "Escape":
