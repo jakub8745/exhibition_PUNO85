@@ -506,52 +506,74 @@ function init() {
             video.paused ? video.play() : video.pause();
             break;
 
-          case 'Floor':
-          case 'visitorLocation':
-          case 'Room':
-            const { distance, point } = clickedObject;
+            case 'Floor':
+              case 'visitorLocation':
+              case 'Room': {
+                  const { distance, point } = clickedObject;
+              
+                  let pulseTween;
+              
+                  circle = visitor.parent.getObjectByName('circle');
+                  if (!circle) addPointerCircle();
+              
+                  clickedPoint.copy(point);
+                  visitorPos.copy(visitor.position.clone());
+              
+                  clickedPoint.y += 0.1; // Slight offset for visibility
+              
+                 
 
-            let pulseTween;
 
-            circle = visitor.parent.getObjectByName('circle');
-            if (!circle) addPointerCircle();
+              
+                  // Stop any existing pulseTween to prevent conflicts
+                  if (pulseTween) {
+                    pulseTween.stop();
+                    pulseTween = null;
+                }
 
-            clickedPoint.copy(point);
-            visitorPos.copy(visitor.position.clone());
+                 // Reset circle properties
+                 circle.position.copy(clickedPoint);
+                 circle.scale.set(1, 1, 1); // Reset scale to full size
+                 circle.visible = true;
+              
+                  // Visitor movement tween
+                  const tweenTarget = { x: visitorPos.x, z: visitorPos.z };
+                  tween = new TWEEN.Tween(tweenTarget)
+                      .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
+                      .onUpdate(({ x, z }) => {
 
-            circle.position.copy(point);
-            circle.scale.set(1, 1, 1);
-            circle.visible = true;
+                          visitor.position.set(x, visitor.position.y, z);
+                          visitor.updateMatrixWorld();
+                      })
+                      .onComplete(() => {
+                          circle.visible = false; // Hide circle after movement completes
+                          tween = null; // Clear tween reference
+                          pulseTween = null; // Clear pulseTween reference
+                      });
+              
+                  tween.start();
+              
+                  // Pulse animation for circle
+                  pulseTween = new TWEEN.Tween({ scale: 1 })
+                      .to({ scale: 0.4 }, 600)
+                      .repeat(Infinity)
+                      .yoyo(true)
+                      .easing(TWEEN.Easing.Quadratic.InOut) // Smooth easing for scaling
+                      .onUpdate(({ scale }) => {
 
-            const tweenTarget = { x: visitorPos.x, z: visitorPos.z };
-            tween = new TWEEN.Tween(tweenTarget)
-              .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / params.visitorSpeed)
-              .onUpdate(({ x, z }) => {
+                        console.log('Active tweens:', TWEEN.getAll().length);
 
-                visitor.position.set(x, visitor.position.y, z);
-                visitor.updateMatrixWorld();
-              })
-              .onComplete(() => {
-                circle.visible = false;
-                tween = null; // Clear tween reference
-              });
-
-            tween.start();
-
-            pulseTween = new TWEEN.Tween({ scale: 1 })
-              .to({ scale: 0 }, 400)
-              .repeat(Infinity)
-              .yoyo(true)
-              .onUpdate(({ scale }) => {
-                circle.scale.set(scale, scale, scale);
-              })
-              .onStop(() => {
-                circle.visible = false;
-                pulseTween = null; // Clear pulseTween reference
-              });
-
-            pulseTween.start();
-            break;
+                          circle.scale.set(scale, scale, scale); // Update circle scale
+                      })
+                      .onStop(() => {
+                          circle.visible = false; // Ensure the circle is hidden on stop
+                          pulseTween = null; // Clear pulseTween reference
+                      });
+              
+                  pulseTween.start();
+                  break;
+              }
+              
 
           default:
             break;
@@ -1031,7 +1053,7 @@ function addPointerCircle() {
       color: 0xffcc00,
       side: DoubleSide,
       transparent: true,
-      opacity: 0.5,
+      opacity: 1,
     })
   );
   circleYellow.rotation.x = (90 * Math.PI) / 180;
@@ -1043,7 +1065,7 @@ function addPointerCircle() {
       color: 0x0066cc,
       side: DoubleSide,
       transparent: true,
-      opacity: 0.5,
+      opacity: 1,
     })
   );
   circleBlue.rotation.x = (90 * Math.PI) / 180;

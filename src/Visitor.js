@@ -14,7 +14,7 @@ export default class Visitor extends Mesh {
 
     this.name = "visitor";
     this.capsuleInfo = {
-      radius: 0.15, // Smaller radius for navigating narrow spaces
+      radius: 0.20, // Smaller radius for navigating narrow spaces
       segment: new Line3(
         new Vector3(0, 0, 0),    // Start of the capsule segment (at visitor origin)
         new Vector3(0, 1.5, 0)   // End of the capsule segment (1.5 units tall)
