@@ -301,7 +301,7 @@ class ModelLoader {
 
             // Add positional audio helper (for visualization during development)
             const helper = new PositionalAudioHelper(sound, 20);
-            sound.add(helper);
+            //sound.add(helper);
 
             // Attach sound to the mesh
             mesh.add(sound);

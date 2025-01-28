@@ -288,7 +288,7 @@ function init() {
 
     const circleMap = sceneMap.getObjectByName("circleMap");
     if (circleMap) {
-      targetV.y + 100
+      targetV.y + 20000
       circleMap.position.copy(targetV);
     }
 
@@ -1044,7 +1044,7 @@ function addVisitorMapCircle() {
     })
   );
   circleMap.position.copy(visitor.position);
-  circleMap.position.y = visitor.position.y + 1000;
+  circleMap.position.y = visitor.position.y + 10000;
   circleMap.name = "circleMap";
   circleMap.rotation.x = (90 * Math.PI) / 180;
   circleMap.visible = true

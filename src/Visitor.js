@@ -264,7 +264,7 @@ export default class Visitor extends Mesh {
 
     //
     const target = this.position.clone();
-    target.add(new Vector3(0, 0, 0));
+    target.add(new Vector3(0, 1.5, 0));
     this.sceneMap.getObjectByName("circleMap").position.copy(target);
 
 
