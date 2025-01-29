@@ -28,7 +28,7 @@ a {
 
 #experimental {
   display: flex;
-  font-size: 0.5em;
+  font-size: 1em;
 
   position: relative;
   animation: float-left 45s infinite linear;
@@ -278,6 +278,23 @@ a {
   display: flex;
   align-items: center;
   position: relative;
+}
+
+.sidebar .how-to-move{
+  display: none;
+  opacity: 0;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-size: large;
+  color: whitesmoke;
+  margin: 1em;
+  margin-top: 2em;
+}
+
+.sidebar.sidebar.open .how-to-move{
+  display: flex;
+  opacity: 1;
 }
 
 @media (max-width: 420px) {
