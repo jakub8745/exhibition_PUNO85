@@ -1,5 +1,5 @@
 import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
-import { Fog, AmbientLight, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
+import { Fog, AmbientLight, Color, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
@@ -326,7 +326,7 @@ function init() {
 
   // VISITOR
   visitor = new Visitor(deps);
-  visitor.position.set(-4.808420282897411, 0.20870486663818358, 4.438353369305904);
+  visitor.position.set(-4.808420282897411, 10.20870486663818358, 4.438353369305904);
 
   visitor.mainScene.add(visitor)
 
@@ -386,6 +386,8 @@ function init() {
 
     deps.params.exhibitCollider = mainCollider;
 
+    visitor.parent.background = new Color(0x000000); // White color
+    /*
     ktx2Loader.load("/textures/galaktyka.ktx2", (texture) => {
 
       texture.mapping = EquirectangularReflectionMapping;
@@ -395,14 +397,18 @@ function init() {
       scene.backgroundIntensity = 1;
       scene.backgroundBlurriness = 0;
 
-      rotateOrbit(180);
+      
 
     });
+*/
 
+    rotateOrbit(180);
     animate();
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function (e) {
+    e.preventDefault();
+    document.querySelector(".sidebar").classList.toggle("open");
     loadMainScene();
   });
 
@@ -410,7 +416,7 @@ function init() {
 
   const loadingElement = document.getElementById('loading'); // Spinner container
 
-  loadingElement.style.display = 'none';
+  loadingElement.style.display = 'flex';
 
   // events
 
@@ -891,9 +897,13 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
+    console.log("changed", ModelLoader.currentModel, ModelLoader.totalModels);
+
     stopAnimation(); // Stop the current animation loop during the transition
 
     const newFloor = result.newFloor;
+
+
 
     let exhibitModelPath = "/models/cipriani_interior.glb";
     newFloor.name = "PodlogaSchodyPodest"
@@ -910,9 +920,10 @@ async function updateVisitor(collider, delta) {
 
       // Check if the scene is already loaded
       if (visitor.exhibitScene.children.length !== 0) {
+
         console.warn("Scene already loaded. Skipping load.");
         const loadingElement = document.getElementById('loading');
-        if (loadingElement) loadingElement.style.display = 'none'; // Hide spinner if it was shown
+        if (loadingElement) loadingElement.style.display = 'flex'; // Hide spinner if it was shown
         return;
       }
 
@@ -960,7 +971,7 @@ async function updateVisitor(collider, delta) {
           });
 
           console.log("Scene loaded successfully");
-          progressText.textContent = "Scene loaded successfully.";
+          progressText.textContent = "Exhibition loaded successfully.";
         } catch (error) {
           console.error("Error loading scene:", error);
           progressText.textContent = "Error loading scene.";
@@ -968,7 +979,7 @@ async function updateVisitor(collider, delta) {
           // Ensure spinner is hidden after loading is complete
           setTimeout(() => {
             loadingElement.style.display = 'none';
-          }, 5000); // Add a slight delay for a smooth transition
+          }, 500); // Add a slight delay for a smooth transition
         }
       }
 

@@ -27,11 +27,11 @@ a {
 
 
 #experimental {
-  display: flex;
+  display: none;
   font-size: 1em;
 
   position: relative;
-  animation: float-left 45s infinite linear;
+  animation: float-left 80s infinite linear;
   white-space: nowrap;
 
 }
@@ -284,7 +284,8 @@ a {
   font-weight: 100;
   display: none;
   opacity: 0;
-  align-items: center;
+  align-items: flex-start;
+
   justify-content: center;
   position: relative;
   font-size: normal;
@@ -301,12 +302,13 @@ a {
   /* Set a widt width: 300px;h */
   height: 23em;
   /* Set a fixed height */
-  overflow-y: auto;
+  overflow: auto;
   /* Enable vertical scrolling */
   border: 6px solid #141421;
   border-radius: 10px;
   background-color: #142236;
   padding-top: 31em;
+  padding-left: 1em;
 
 
 }
@@ -349,7 +351,7 @@ a {
 .sidebar .logo-details #btn {
   position: absolute;
   top: 50%;
-  right: -2em;
+  right: -1em;
   transform: translateY(-50%);
   font-size: 1.2em;
   font-weight: bold;
@@ -358,7 +360,7 @@ a {
   text-align: center;
   cursor: pointer;
   transition: all 0.5s ease;
-  background-color: #ddebff;
+  background-color: #a7e8ff;
   border: 2px solid #142236;
   border-radius: 20%;
   color: #142236;

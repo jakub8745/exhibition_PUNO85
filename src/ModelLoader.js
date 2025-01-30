@@ -1,4 +1,4 @@
-import { Group, Box3, Mesh, MeshBasicMaterial, MathUtils,LoadingManager, PositionalAudio, AudioLoader } from 'three';
+import { Group, Box3, Mesh, MeshBasicMaterial, MathUtils, LoadingManager, PositionalAudio, AudioLoader } from 'three';
 import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
 
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -46,8 +46,8 @@ class ModelLoader {
 
         this.gui = deps.gui;
 
-
-
+        this.currentModel = 1;
+        this.totalModels = 3;
 
 
     }
@@ -57,19 +57,18 @@ class ModelLoader {
         if (this.scene.name === 'exhibitScene') this.addToSceneMapRun = false;
 
         try {
-            let currentModel = 2;
-            const totalModels = 2;
+
 
             // Load the main model
-            const gltfScene = await this.loadGLTFModel(modelPath, currentModel, totalModels);
+            const gltfScene = await this.loadGLTFModel(modelPath, this.currentModel, this.totalModels);
 
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
 
             // Load exhibit objects if applicable
             if (this.newFloor?.userData.exhibitObjectsPath) {
-                currentModel++;
-                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', currentModel, totalModels);
+                this.currentModel++;
+                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', this.currentModel, this.totalModels);
                 this.processExhibitObjects(exhibitObjects);
                 gltfScene.add(exhibitObjects);
             }
@@ -98,7 +97,7 @@ class ModelLoader {
 
         } finally {
             await Promise.allSettled([
-console.log("models loaded ocksovncifsnvinfs"),                
+                console.log("models loaded ocksovncifsnvinfs"),
             ]);
 
         }
@@ -107,7 +106,9 @@ console.log("models loaded ocksovncifsnvinfs"),
 
 
     // Helper function to load GLTF model
-    async loadGLTFModel(modelPath, currentModel, totalModels, progressText) {
+    async loadGLTFModel(modelPath, currentModel, totalModels) {
+        const progressText = document.getElementById('progress-text');
+
         const onProgress = (xhr) => {
 
             if (xhr.total) {
@@ -115,7 +116,7 @@ console.log("models loaded ocksovncifsnvinfs"),
                 const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
 
                 console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
-                //progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
+                progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
             }
         };
 
