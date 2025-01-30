@@ -626,6 +626,17 @@ function init() {
     document.querySelector(".sidebar").classList.toggle("open");
   });
 
+  // Prevent clicks inside the sidebar from affecting Three.js
+  document.querySelector(".sidebar").addEventListener("pointerdown", (e) => {
+    e.stopPropagation(); // Prevent event from reaching the Three.js scene
+  });
+  document.querySelector(".sidebar").addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+  document.querySelector(".sidebar").addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+  });
+
   // info
   document.querySelector("#info-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -633,7 +644,7 @@ function init() {
   });
 
   // publications
- 
+
   document.querySelector("#books-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     let newWindow = window.open();
@@ -916,38 +927,38 @@ async function updateVisitor(collider, delta) {
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
       visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
 
-      
+
       async function loadScene() {
         const loadingElement = document.getElementById('loading');
         const progressText = document.getElementById('progress-text');
-      
+
         if (!loadingElement || !progressText) {
           console.error("Loading elements not found in DOM!");
           return;
         }
-      
+
         // Show loading spinner
         loadingElement.style.display = 'flex';
         progressText.textContent = "Loading scene...";
-      
+
         try {
           console.log("Starting to load scene", exhibitModelPath);
-      
+
           // Load the main model
           const collider = await modelLoader.loadModel(exhibitModelPath);
           collider.name = "exhibitCollider";
-      
+
           // Update dependencies
           deps.params.exhibitCollider = collider;
           deps.bgTexture = "/textures/bg_color.ktx2";
           deps.bgInt = newFloor.userData.bgInt || 1;
           deps.bgBlur = newFloor.userData.bgBlur || 0;
-      
+
           // Move visitor to the scene and set background
           visitor.moveToScene(visitor.exhibitScene, () => {
             handleSceneBackground(deps);
           });
-      
+
           console.log("Scene loaded successfully");
           progressText.textContent = "Scene loaded successfully.";
         } catch (error) {
@@ -960,10 +971,10 @@ async function updateVisitor(collider, delta) {
           }, 5000); // Add a slight delay for a smooth transition
         }
       }
-      
+
       // Call the function correctly
       loadScene().catch(console.error);
-      
+
 
       // Call loadScene and wait for it to complete
       await loadScene();
