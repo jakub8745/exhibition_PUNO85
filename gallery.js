@@ -906,57 +906,64 @@ async function updateVisitor(collider, delta) {
       }
 
       console.log('newfloor', newFloor);
+      const progressText = document.getElementById('progress-text');
+      progressText.textContent = "Preparing to load...";
+
+      document.getElementById('loading').style.display = 'flex';
+
 
       // Initialize ModelLoader
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
       visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
 
-      const progressText = document.getElementById('progress-text');
-      progressText.textContent = "Preparing to load...";
-
+      
       async function loadScene() {
         const loadingElement = document.getElementById('loading');
         const progressText = document.getElementById('progress-text');
-
-        if (!loadingElement) {
-          console.error("Loading element not found in DOM!");
+      
+        if (!loadingElement || !progressText) {
+          console.error("Loading elements not found in DOM!");
           return;
         }
-
-        // Show the loading spinner
+      
+        // Show loading spinner
         loadingElement.style.display = 'flex';
         progressText.textContent = "Loading scene...";
-
+      
         try {
           console.log("Starting to load scene", exhibitModelPath);
-
+      
           // Load the main model
           const collider = await modelLoader.loadModel(exhibitModelPath);
           collider.name = "exhibitCollider";
-
-          // Update dependencies with loaded data
+      
+          // Update dependencies
           deps.params.exhibitCollider = collider;
           deps.bgTexture = "/textures/bg_color.ktx2";
           deps.bgInt = newFloor.userData.bgInt || 1;
           deps.bgBlur = newFloor.userData.bgBlur || 0;
-
-          // Move visitor to the scene and handle the background
+      
+          // Move visitor to the scene and set background
           visitor.moveToScene(visitor.exhibitScene, () => {
             handleSceneBackground(deps);
           });
-
+      
           console.log("Scene loaded successfully");
           progressText.textContent = "Scene loaded successfully.";
-
         } catch (error) {
           console.error("Error loading scene:", error);
           progressText.textContent = "Error loading scene.";
         } finally {
-          // Hide the loading spinner after everything is done
-          console.log("Hiding loading spinner");
-          loadingElement.style.display = 'none';
+          // Ensure spinner is hidden after loading is complete
+          setTimeout(() => {
+            loadingElement.style.display = 'none';
+          }, 5000); // Add a slight delay for a smooth transition
         }
       }
+      
+      // Call the function correctly
+      loadScene().catch(console.error);
+      
 
       // Call loadScene and wait for it to complete
       await loadScene();
