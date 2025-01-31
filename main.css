@@ -1,4 +1,5 @@
-/* Prevent text selection or highlighting */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap');
+
 body {
   -webkit-user-select: none;
   /* Disable user selection on iOS */
@@ -280,43 +281,7 @@ a {
   position: relative;
 }
 
-.sidebar .how-to-move {
-  font-weight: 100;
-  display: none;
-  opacity: 0;
-  align-items: flex-start;
 
-  justify-content: center;
-  position: relative;
-  font-size: normal;
-  color: rgb(156, 183, 196);
-  margin: 1em;
-  margin-top: 0em;
-
-
-  justify-content: center;
-  /* Centers horizontally */
-  align-items: center;
-
-  top: 2em;
-  /* Set a widt width: 300px;h */
-  height: 23em;
-  /* Set a fixed height */
-  overflow: auto;
-  /* Enable vertical scrolling */
-  border: 6px solid #141421;
-  border-radius: 10px;
-  background-color: #142236;
-  padding-top: 31em;
-  padding-left: 1em;
-
-
-}
-
-.sidebar.sidebar.open .how-to-move {
-  display: flex;
-  opacity: 1;
-}
 
 @media (max-width: 420px) {
   .sidebar .logo-details {
@@ -348,10 +313,14 @@ a {
   opacity: 1;
 }
 
+#btn{
+  font-family: "Archivo", serif !important;
+}
+
 .sidebar .logo-details #btn {
   position: absolute;
   top: 50%;
-  right: -1em;
+  right: -1.5em;
   transform: translateY(-50%);
   font-size: 1.2em;
   font-weight: bold;
@@ -404,19 +373,36 @@ li.text_in_sidebar.open canvas.open {
 
 #info_text_in_sidebar,
 #books_text_in_sidebar,
-#map_in_sidebar {
+#map_in_sidebar,
+.sidebar .how-to-move {
   display: none;
   align-items: flex-start;
   position: relative;
   max-width: 96%;
   color: white;
-  text-align: left;
   justify-content: flex-start;
   font-size: 1em;
   font-weight: 100;
   transition: all 0.5s ease;
   margin: 1.5em 0 0 0px;
   /*padding: 10em 1em 0 0;*/
+}
+
+.sidebar .how-to-move {
+  border: 6px solid #141421;
+  border-radius: 10px;
+  background-color: #142236;
+  color: rgb(156, 183, 196);
+  font-size: normal;
+  height: 23em;
+  overflow: auto;
+  padding-left: 1em;
+
+}
+
+.sidebar.sidebar.open .how-to-move {
+  display: flex;
+  opacity: 1;
 }
 
 @media (max-width: 420px) {

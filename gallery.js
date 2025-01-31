@@ -936,7 +936,7 @@ async function updateVisitor(collider, delta) {
 
       // Initialize ModelLoader
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
-      visitor.exhibitScene.add(new AmbientLight(0x404040, 65));
+      visitor.exhibitScene.add(new AmbientLight(0x404040, 75));
 
 
       async function loadScene() {
