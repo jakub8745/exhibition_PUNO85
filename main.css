@@ -313,7 +313,7 @@ a {
   opacity: 1;
 }
 
-#btn{
+#btn {
   font-family: "Archivo", serif !important;
 }
 
@@ -757,4 +757,34 @@ li.text_in_sidebar.open canvas.open {
   top: 5em;
   position: relative;
   left: 2em;
+}
+
+/* Slider Styling */
+.slider-container {
+  position: relative;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  border-radius: 20px;
+  color: white;
+  font-family: Arial, sans-serif;
+  z-index: 10;
+  /* Ensures it stays above Three.js */
+  pointer-events: all;
+  /* Fix for interaction */
+  margin-top: 1em;
+
+}
+
+.slider-container input {
+  width: 200px;
+  cursor: pointer;
+
+}
+
+.sidebar.sidebar.open .slider-container {
+  display: flex;
+  opacity: 1;
 }

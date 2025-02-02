@@ -699,6 +699,7 @@ function init() {
   }
 
 
+
   //////
 
 
@@ -897,7 +898,7 @@ async function updateVisitor(collider, delta) {
 
   if (result.changed) {
 
-    console.log("changed", ModelLoader.currentModel, ModelLoader.totalModels);
+    //console.log("changed", ModelLoader.currentModel, ModelLoader.totalModels);
 
     stopAnimation(); // Stop the current animation loop during the transition
 
@@ -936,7 +937,23 @@ async function updateVisitor(collider, delta) {
 
       // Initialize ModelLoader
       const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
-      visitor.exhibitScene.add(new AmbientLight(0x404040, 75));
+      const ambientLight = new AmbientLight(0x404040, 75);
+      ambientLight.name = "ambientLight";
+      visitor.exhibitScene.add(ambientLight);
+
+
+      console.log(ambientLight);
+
+      // Brightness Slider Event Listener
+      document.getElementById("brightness").addEventListener("input", function (event) {
+        ambientLight.intensity = event.target.value;
+      });
+
+      // Prevent Three.js from capturing slider interactions
+      document.querySelector(".slider-container").addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
+      });
+
 
 
       async function loadScene() {
@@ -953,7 +970,7 @@ async function updateVisitor(collider, delta) {
         progressText.textContent = "Loading scene...";
 
         try {
-          console.log("Starting to load scene", exhibitModelPath);
+          // console.log("Starting to load scene", exhibitModelPath);
 
           // Load the main model
           const collider = await modelLoader.loadModel(exhibitModelPath);
@@ -970,7 +987,7 @@ async function updateVisitor(collider, delta) {
             handleSceneBackground(deps);
           });
 
-          console.log("Scene loaded successfully");
+          //console.log("Scene loaded successfully");
           progressText.textContent = "Exhibition loaded successfully.";
         } catch (error) {
           console.error("Error loading scene:", error);

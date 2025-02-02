@@ -97,7 +97,7 @@ class ModelLoader {
 
         } finally {
             await Promise.allSettled([
-                console.log("models loaded ocksovncifsnvinfs"),
+                //console.log("models loaded ocksovncifsnvinfs"),
             ]);
 
         }
@@ -115,7 +115,7 @@ class ModelLoader {
 
                 const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
 
-                console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
+                //console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
                 progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
             }
         };

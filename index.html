@@ -242,7 +242,7 @@
           </span>
         </a>
       </li>
-      <div class="how-to-move" class="info_sidebar" >
+      <div class="how-to-move" class="info_sidebar">
         <span class="info_text">
           How to move in the gallery:</br></br>
 
@@ -287,6 +287,12 @@
 
         </span>
       </div>
+      <!-- Brightness Control UI -->
+      <div class="slider-container">
+        <label for="brightness">Brightness</label>
+        <input type="range" id="brightness" min="50" max="350" step="0.01" value="1">
+      </div>
+
     </ul>
 
 
@@ -309,13 +315,8 @@
   </div>
 
 
-  <!-- Video -->
-  <video id="videoUnreal" loop crossorigin="anonymous" playsinline style="display: none">
-    <source src="/textures/identity/video/UnrealPlaces.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
-  </video>
-  <video id="heritage" loop crossorigin="anonymous" playsinline style="display: none">
-    <source src="/textures/identity/video/MurzynHeritage.mp4" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' />
-  </video>
+
+
   <script type="importmap">
       {
         "imports": {
