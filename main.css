@@ -336,6 +336,8 @@ a {
  
   text-align: right;
   transform: scaleX(-1);
+  left: calc(min(400px, 86vw)); /* Ensures it sticks to the edge of .sidebar */
+
 }
 
 
