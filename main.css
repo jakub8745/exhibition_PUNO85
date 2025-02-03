@@ -242,13 +242,6 @@ a {
   display: flex;
 }
 
-/*
-
-
-*/
-
-/* Google Font Link */
-
 * {
   margin: 0;
   padding: 0;
@@ -267,11 +260,14 @@ a {
   padding: 6px 1px;
   z-index: 99;
   transition: all 0.5s ease;
+  overflow: auto;
+
 }
 
 .sidebar.open {
   width: 400px;
   max-width: 86%;
+  display: flex;
 }
 
 .sidebar .logo-details {
@@ -315,16 +311,15 @@ a {
 
 #btn {
   font-family: "Archivo", serif !important;
-}
 
-.sidebar .logo-details #btn {
-  position: absolute;
-  top: 50%;
-  right: -1.5em;
+  position: fixed;
+  display: block;
+  left: 0px;
+  top: 75px;
+  z-index: 1000;
   transform: translateY(-50%);
   font-size: 1.2em;
   font-weight: bold;
-  transition: all 0.4s ease;
 
   text-align: center;
   cursor: pointer;
@@ -333,18 +328,24 @@ a {
   border: 2px solid #142236;
   border-radius: 20%;
   color: #142236;
-  padding: 2px 4px 3px 4px;
+  padding: 2px 1px 3px 4px;
+
 }
 
-@media (max-width: 420px) {
-  .sidebar .logo-details #btn {
-    font-size: 1em;
-  }
-}
-
-.sidebar.open .logo-details #btn {
+#btn.open {
+  display: block;
+  left: 400px;
+  top: 75px;
   text-align: right;
   transform: scaleX(-1);
+}
+
+
+
+@media (max-width: 420px) {
+  #btn {
+    font-size: 1em;
+  }
 }
 
 .sidebar canvas,
@@ -358,7 +359,7 @@ li.text_in_sidebar canvas {
 .sidebar.open div.map_in_sidebar,
 li.text_in_sidebar.open canvas.open {
   transition: all 0.5s ease;
-  display: block;
+  display: flex;
   width: 360px;
   height: 500px;
   position: relative;
@@ -386,6 +387,7 @@ li.text_in_sidebar.open canvas.open {
   transition: all 0.5s ease;
   margin: 1.5em 0 0 0px;
   /*padding: 10em 1em 0 0;*/
+
 }
 
 .sidebar .how-to-move {
@@ -443,7 +445,8 @@ li.text_in_sidebar.open canvas.open {
 .sidebar .nav-list {
   padding: 1em 1em;
   /*margin-top: 20px;*/
-  height: 100%;
+  height: 140%;
+
 }
 
 @media (max-width: 420px) {
@@ -768,8 +771,7 @@ li.text_in_sidebar.open canvas.open {
   background: rgba(0, 0, 0, 0.7);
   padding: 4px;
   border-radius: 20px;
-  color: white;
-  font-family: Arial, sans-serif;
+  color: rgba(255, 255, 255, 0.818);
   z-index: 10;
   /* Ensures it stays above Three.js */
   pointer-events: all;

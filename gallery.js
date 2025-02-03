@@ -409,6 +409,8 @@ function init() {
   document.addEventListener('DOMContentLoaded', function (e) {
     e.preventDefault();
     document.querySelector(".sidebar").classList.toggle("open");
+    document.querySelector("#btn").classList.toggle("open");
+
     loadMainScene();
   });
 
@@ -630,6 +632,8 @@ function init() {
   document.querySelector("#btn").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     document.querySelector(".sidebar").classList.toggle("open");
+    document.querySelector("#btn").classList.toggle("open");
+
   });
 
   // Prevent clicks inside the sidebar from affecting Three.js
