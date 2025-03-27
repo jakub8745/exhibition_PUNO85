@@ -1,4 +1,4 @@
-import { Group, Box3, Mesh, MeshBasicMaterial, MathUtils, LoadingManager, PositionalAudio, AudioLoader } from 'three';
+import { EdgesGeometry, LineBasicMaterial, LineSegments, Group, Box3, Mesh, MeshBasicMaterial, MathUtils, LoadingManager, PositionalAudio, AudioLoader } from 'three';
 import { PositionalAudioHelper } from 'three/addons/helpers/PositionalAudioHelper.js';
 
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -26,7 +26,7 @@ class ModelLoader {
 
         this.manager = new LoadingManager();
 
-        this.gltfLoader = new GLTFLoader();
+        this.gltfLoader = new GLTFLoader(this.manager);
         this.dracoLoader = new DRACOLoader(this.manager).setDecoderPath('./libs/draco/');
 
         this.meshoptDecoder = MeshoptDecoder;
@@ -47,7 +47,10 @@ class ModelLoader {
         this.gui = deps.gui;
 
         this.currentModel = 1;
-        this.totalModels = 3;
+        this.totalModels = 2;
+
+
+
 
 
     }
@@ -65,13 +68,11 @@ class ModelLoader {
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
 
-            // Load exhibit objects if applicable
-            if (this.newFloor?.userData.exhibitObjectsPath) {
-                this.currentModel++;
-                const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', this.currentModel, this.totalModels);
-                this.processExhibitObjects(exhibitObjects);
-                gltfScene.add(exhibitObjects);
-            }
+            this.currentModel++;
+            const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', this.currentModel, this.totalModels);
+            this.processExhibitObjects(exhibitObjects);
+            gltfScene.add(exhibitObjects);
+            //}
 
             // Process scene objects
             this.processSceneObjects(gltfScene);
@@ -109,13 +110,15 @@ class ModelLoader {
     async loadGLTFModel(modelPath, currentModel, totalModels) {
         const progressText = document.getElementById('progress-text');
 
+
+
         const onProgress = (xhr) => {
 
             if (xhr.total) {
 
                 const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
 
-                //console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
+                console.log(`Loading model ${currentModel}/${totalModels}: ${percentComplete}%`);
                 progressText.textContent = `Loading model ${currentModel}/${totalModels}: ${percentComplete}%`;
             }
         };
@@ -177,7 +180,7 @@ class ModelLoader {
         for (const meshType in this.toMerge) {
             const objects = this.toMerge[meshType];
             objects.forEach((mesh) => {
-                if (mesh.userData.name !== "VisitorEnter" && mesh.userData.name !== "ciprianiAudio") {
+                if (mesh.userData.name !== "VisitorEnter" && mesh.userData.name !== "ciprianiAudio" && mesh.name !== "Circle") {
                     this.environment.attach(mesh);
                 } else if (mesh.userData.name === "ciprianiAudio") {
                     //
@@ -186,7 +189,7 @@ class ModelLoader {
                     this.environment.attach(mesh);
 
                 } else {
-                    console.log("VisitorEnter znaleziony", mesh);
+                    //console.log("VisitorEnter znaleziony", mesh);
                 }
             });
         }
@@ -213,30 +216,86 @@ class ModelLoader {
 
     // Helper function to customize environment
     customizeEnvironment() {
+
         this.environment.traverse((object) => {
-            if (this.scene.name === "exhibitScene" &&
+            if (this.scene.name === "mainScene" &&
                 (/Wall|visitorLocation|Room/.test(object.userData.name) ||
                     /visitorLocation|Room/.test(object.userData.type))) {
+
                 this.addToSceneMap(object);
             }
         });
     }
 
+    addVisitorMapCircle() {
 
+        // visitor Map
+        circleMap = new Mesh(
+            new RingGeometry(0.1, 1, 32),
+            new MeshBasicMaterial({
+                color: 0xa2c7ff,
+                side: DoubleSide,
+                transparent: true,
+                opacity: 1,
+                //depthTest: false // Ensures it renders on top of everything
+
+            })
+        );
+        circleMap.position.copy(visitor.position);
+        circleMap.position.y = visitor.position.y + 10;
+        circleMap.name = "circleMap";
+        circleMap.rotation.x = (90 * Math.PI) / 180;
+        circleMap.visible = true
+        circleMap.material.depthWrite = true
+
+        sceneMap.add(circleMap);
+
+        //
+
+    }
 
 
     addToSceneMap(mesh) {
 
-        if (!this.addToSceneMapRun) {
+        if (this.addToSceneMapRun) {
 
             const { sceneMap } = this.deps;
 
             const cClone = mesh.clone();
+
+
+
+            // Assign material for the base mesh
             cClone.material = new MeshBasicMaterial({
-                color: mesh.userData.type === 'visitorLocation' || mesh.userData.type === 'Room' ? 0x1b689f : 0xffffff,
-                opacity: mesh.userData.type === 'visitorLocation' || mesh.userData.type === 'Room' ? 0.8 : 1,
+                color: cClone.userData.type === 'visitorLocation' ||
+                    cClone.userData.type === 'element' ||
+                    cClone.userData.type === 'Room'
+                    ? 0x1b689f
+                    : 0xffffff,
+                opacity: cClone.userData.type === 'visitorLocation' ||
+                    cClone.userData.type === 'element' ||
+                    cClone.userData.type === 'Room'
+                    ? 0.8
+                    : 1,
                 transparent: true,
+                depthWrite: false
             });
+
+            // Add an outline using EdgesGeometry
+            const edgesGeometry = new EdgesGeometry(cClone.geometry);
+            const edgeMaterial = new LineBasicMaterial({ color: 0x00000f }); // Black outline
+            const edgeLines = new LineSegments(edgesGeometry, edgeMaterial);
+
+            // Ensure the outline follows the clone’s transform
+            edgeLines.position.copy(cClone.position);
+            edgeLines.rotation.copy(cClone.rotation);
+            edgeLines.scale.copy(cClone.scale);
+
+            // Add both the mesh and outline to the scene
+            sceneMap.add(cClone);
+            sceneMap.add(edgeLines);
+
+
 
             if (mesh.userData.label) {
                 const labelDiv = document.createElement('div');
@@ -256,7 +315,7 @@ class ModelLoader {
                 });
 
                 const labelObject = new CSS2DObject(labelDiv);
-                labelObject.position.set(0, 0, 0);
+                labelObject.position.set(10, 0, -5);
                 cClone.add(labelObject);
             }
 
@@ -297,12 +356,8 @@ class ModelLoader {
             const radians = MathUtils.degToRad(120);
             mesh.rotation.y += radians;
 
-
-
         });
     }
-
-
 
 }
 

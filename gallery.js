@@ -6,19 +6,13 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-
-import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js'
-
 import ModelLoader from './src/ModelLoader.js'
-import { disposeSceneObjects, AudioHandler } from './src/utils.js';
+import { AudioHandler } from './src/utils.js';
 
 import Visitor from './src/Visitor.js'
 import JoyStick from './src/Joystick.js';
 
-import Stats from "three/addons/libs/stats.module.js";
+//import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 import {
@@ -64,7 +58,6 @@ const textureFolder = "/textures/";
 let textureCache = {};
 
 let renderer, camera, scene, clock, tween, stats, anisotropy;
-let composer
 let rendererMap, cameraMap, circleMap, sceneMap, css2DRenderer
 const cameraDirection = new Vector3();
 
@@ -242,7 +235,7 @@ function init() {
     0.1,
     10000
   );
-  cameraMap.position.set(0, -50, 0);
+  cameraMap.position.set(0, -150, 0);
   cameraMap.lookAt(new Vector3(0, 0, 0));
 
 
@@ -263,18 +256,15 @@ function init() {
   css2DRenderer.domElement.style.pointerEvents = 'none'; // Make sure it doesn't block interactions
   document.querySelector("div#map_in_sidebar.info_sidebar").appendChild(css2DRenderer.domElement);
 
-
-  // AmbientLight MAP
-  //const light = new AmbientLight(0xffffff, 60); // soft white light
-  //sceneMap.add(light);
-
-  // stats setup
   //stats = new Stats();
   //document.body.appendChild(stats.dom);
 
   const resetVisitor = () => {
 
     visitor.visitorVelocity.set(0, 0, 0)
+    visitor.target.set(-4.808420282897411, 10.20870486663818358, 4.438353369305904);
+    rotateOrbit(180);
+
 
     const targetV = visitor.target.clone()
     targetV.y += 2;
@@ -330,7 +320,7 @@ function init() {
 
   visitor.mainScene.add(visitor)
 
-  visitor.mainScene.fog = new Fog(0x2b0a07, 3.1, 18);
+  visitor.mainScene.fog = new Fog(0xa2c7ff, 1.1, 100);
 
   //const ambientLight = new AmbientLight(0xFFF9E3, 5);
   //visitor.mainScene.add(ambientLight);
@@ -338,17 +328,72 @@ function init() {
   //
   addVisitorMapCircle();
 
-  // composer
-  composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(visitor.mainScene, camera));
-
-  const effect1 = new ShaderPass(DotScreenShader);
-  effect1.uniforms['scale'].value = 10;
-  composer.addPass(effect1);
-
 
   // LOAD MODEL (environment, collider)
   const modelLoader = new ModelLoader(deps, visitor.parent);
+  const ambientLight = new AmbientLight(0x404040, 75);
+  ambientLight.name = "ambientLight";
+  visitor.parent.add(ambientLight);
+  // Brightness Slider Event Listener
+  document.getElementById("brightness").addEventListener("input", function (event) {
+    ambientLight.intensity = event.target.value;
+  });
+
+  // Prevent Three.js from capturing slider interactions
+  document.querySelector(".slider-container").addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+  });
+
+
+  async function loadMainScene() {
+
+    const scene = visitor.parent;
+    params.archiveModelPath = "/models/cipriani_interior.glb"
+
+    const loadingElement = document.getElementById('loading');
+    const progressText = document.getElementById('progress-text');
+
+    if (!loadingElement || !progressText) {
+      console.error("Loading elements not found in DOM!");
+      return;
+    }
+
+    // Show loading spinner
+    loadingElement.style.display = 'flex';
+    progressText.textContent = "Loading scene...";
+
+    try {
+      const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
+      mainCollider.name = "mainCollider";
+      deps.params.exhibitCollider = mainCollider;
+
+      visitor.parent.background = new Color(0xffffff); // White color
+
+      ktx2Loader.load("/textures/bg_lockdowns.ktx2", (texture) => {
+        texture.mapping = EquirectangularReflectionMapping;
+        texture.colorSpace = SRGBColorSpace;
+
+        scene.background = texture;
+        scene.backgroundIntensity = 1;
+        scene.backgroundBlurriness = 0;
+
+      });
+      //console.log("Scene loaded successfully");
+      progressText.textContent = "Exhibition loaded successfully.";
+    } catch (error) {
+      console.error("Error loading scene:", error);
+      progressText.textContent = "Error loading scene.";
+    } finally {
+      // Ensure spinner is hidden after loading is complete
+      setTimeout(() => {
+        loadingElement.style.display = 'none';
+      }, 1000); // Add a slight delay for a smooth transition
+    }
+
+    rotateOrbit(180);
+    animate();
+  }
+
 
   const rotateOrbit = (angleDegrees) => {
     const angleRadians = MathUtils.degToRad(angleDegrees);
@@ -374,44 +419,13 @@ function init() {
     controls.update();
   };
 
-  async function loadMainScene() {
-    const scene = visitor.parent;
-
-    //params.archiveModelPath = "/models/cipriani_interior.glb"
-
-
-    const mainCollider = await modelLoader.loadModel(params.archiveModelPath);
-
-    mainCollider.name = "mainCollider";
-
-    deps.params.exhibitCollider = mainCollider;
-
-    visitor.parent.background = new Color(0x000000); // White color
-    /*
-    ktx2Loader.load("/textures/galaktyka.ktx2", (texture) => {
-
-      texture.mapping = EquirectangularReflectionMapping;
-      texture.colorSpace = SRGBColorSpace;
-
-      scene.background = texture;
-      scene.backgroundIntensity = 1;
-      scene.backgroundBlurriness = 0;
-
-      
-
-    });
-*/
-
-    rotateOrbit(180);
-    animate();
-  }
 
   document.addEventListener('DOMContentLoaded', function (e) {
     e.preventDefault();
     document.querySelector(".sidebar").classList.toggle("open");
     document.querySelector("#btn").classList.toggle("open");
 
-    loadMainScene();
+    loadMainScene().catch(console.error);
   });
 
   textureCache = preloadTextures();
@@ -470,7 +484,7 @@ function init() {
       raycaster.setFromCamera(pointer, camera);
       raycaster.firstHitOnly = true;
 
-      const intersects = raycaster.intersectObjects(visitor.scene.children);
+      const intersects = raycaster.intersectObjects(visitor.mainScene.children);
 
       const validTypes = ['Image', 'visitorLocation', 'Room', 'Floor', 'Video'];
 
@@ -647,10 +661,13 @@ function init() {
     e.stopPropagation();
   });
 
-  // info
+
+
+  //
+
   document.querySelector("#info-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    handleSBbuttonsClick(e.target.getAttribute("data-divid"));
+    handleSBbuttonsClick(e.currentTarget.getAttribute("data-divid"));
   });
 
   // publications
@@ -665,7 +682,7 @@ function init() {
   document.querySelector("#map-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
 
-    handleSBbuttonsClick(e.target.getAttribute("data-divid"));
+    handleSBbuttonsClick(e.currentTarget.getAttribute("data-divid"));
     if (
       document
         .querySelector("li.text_in_sidebar div#map_in_sidebar.info_sidebar")
@@ -775,7 +792,7 @@ function init() {
         break;
       case " ":
         if (visitor.visitorIsOnGround) {
-          deps.visitor.visitorVelocity.y = 20.0;
+          deps.visitor.visitorVelocity.y = 5.0;
           visitor.visitorIsOnGround = false;
         }
         break;
@@ -791,29 +808,7 @@ function init() {
         control.setMode("rotate");
         break;
       case "t":
-        visitor.parent.traverse((object) => {
-          if (object.name === "trembitaAudio") {
-            const sound = object;
-
-            console.log(object);
-
-            gui.add(sound.panner, "coneInnerAngle", 0, 500, 0.01).name("Inner")// + mesh.name);refDistance
-            gui.add(sound.panner, "coneOuterAngle", 0, 500, 0.01).name("Outer")
-            gui.add(sound.panner, "coneOuterGain", 0, 1, 0.01).name("Outer")
-            gui.add(sound.panner, "refDistance", 0, 10, 0.01).name("refDistance")
-            gui.add(sound.panner, "rolloffFactor", 0, 100, 0.01).name("rolloffFactor")
-
-            //gui.add(mesh.rotation, "y", 0, 10, 0.01).name("RotateY")
-            //gui.add(mesh.rotation, "x", 0, 10, 0.01).name("Rotatex")
-
-
-            gui.open();
-
-
-          }
-          //console.log(object);
-        });
-
+       // control.setMode("scale");
         break;
       case "Escape":
         control.reset();
@@ -900,131 +895,7 @@ async function updateVisitor(collider, delta) {
     }
   }
 
-  if (result.changed) {
-
-    //console.log("changed", ModelLoader.currentModel, ModelLoader.totalModels);
-
-    stopAnimation(); // Stop the current animation loop during the transition
-
-    const newFloor = result.newFloor;
-
-
-
-    let exhibitModelPath = "/models/cipriani_interior.glb";
-    newFloor.name = "PodlogaSchodyPodest"
-
-    if (newFloor.name === "FloorOut") {
-
-      visitor.moveToScene(visitor.mainScene, () => {
-        disposeSceneObjects(visitor.exhibitScene);
-        deps.params.exhibitCollider = visitor.parent.getObjectByName("mainCollider")
-
-      });
-
-    } else {
-
-      // Check if the scene is already loaded
-      if (visitor.exhibitScene.children.length !== 0) {
-
-        console.warn("Scene already loaded. Skipping load.");
-        const loadingElement = document.getElementById('loading');
-        if (loadingElement) loadingElement.style.display = 'flex'; // Hide spinner if it was shown
-        return;
-      }
-
-      console.log('newfloor', newFloor);
-      const progressText = document.getElementById('progress-text');
-      progressText.textContent = "Preparing to load...";
-
-      document.getElementById('loading').style.display = 'flex';
-
-
-      // Initialize ModelLoader
-      const modelLoader = new ModelLoader(deps, visitor.exhibitScene, newFloor);
-      const ambientLight = new AmbientLight(0x404040, 75);
-      ambientLight.name = "ambientLight";
-      visitor.exhibitScene.add(ambientLight);
-
-
-      console.log(ambientLight);
-
-      // Brightness Slider Event Listener
-      document.getElementById("brightness").addEventListener("input", function (event) {
-        ambientLight.intensity = event.target.value;
-      });
-
-      // Prevent Three.js from capturing slider interactions
-      document.querySelector(".slider-container").addEventListener("pointerdown", (event) => {
-        event.stopPropagation();
-      });
-
-
-
-      async function loadScene() {
-        const loadingElement = document.getElementById('loading');
-        const progressText = document.getElementById('progress-text');
-
-        if (!loadingElement || !progressText) {
-          console.error("Loading elements not found in DOM!");
-          return;
-        }
-
-        // Show loading spinner
-        loadingElement.style.display = 'flex';
-        progressText.textContent = "Loading scene...";
-
-        try {
-          // console.log("Starting to load scene", exhibitModelPath);
-
-          // Load the main model
-          const collider = await modelLoader.loadModel(exhibitModelPath);
-          collider.name = "exhibitCollider";
-
-          // Update dependencies
-          deps.params.exhibitCollider = collider;
-          deps.bgTexture = "/textures/bg_color.ktx2";
-          deps.bgInt = newFloor.userData.bgInt || 1;
-          deps.bgBlur = newFloor.userData.bgBlur || 0;
-
-          // Move visitor to the scene and set background
-          visitor.moveToScene(visitor.exhibitScene, () => {
-            handleSceneBackground(deps);
-          });
-
-          //console.log("Scene loaded successfully");
-          progressText.textContent = "Exhibition loaded successfully.";
-        } catch (error) {
-          console.error("Error loading scene:", error);
-          progressText.textContent = "Error loading scene.";
-        } finally {
-          // Ensure spinner is hidden after loading is complete
-          setTimeout(() => {
-            loadingElement.style.display = 'none';
-          }, 500); // Add a slight delay for a smooth transition
-        }
-      }
-
-      // Call the function correctly
-      loadScene().catch(console.error);
-
-
-      // Call loadScene and wait for it to complete
-      await loadScene();
-
-    }
-
-    visitor.lastFloorName = newFloor.name;
-
-    const { bgTexture = "textures/bg_color.ktx2" } = newFloor.userData;
-    deps.bgTexture = bgTexture;
-
-    startAnimation();
-  }
-
-
-
 }
-///////////
 
 function startAnimation() {
   if (animationId) cancelAnimationFrame(animationId);
@@ -1056,8 +927,11 @@ function animateMap() {
 //
 function animate() {
 
+
   if (!deps.params.exhibitCollider) return;
   const collider = deps.params.exhibitCollider;
+
+  //console.log("animate", deps.params.exhibitCollider.name, visitor.parent);
 
   //stats.update();
   TWEEN.update();
@@ -1070,12 +944,15 @@ function animate() {
 
   if (!visitor.parent) return;
 
-  if (visitor.parent === visitor.mainScene) {
-    composer.render();
-  } else {
-    renderer.render(visitor.parent, camera); // Render the exhibit scene
-  }
+  renderer.render(visitor.parent, camera);
 
+  /*
+    if (visitor.parent === visitor.mainScene) {
+      composer.render();
+    } else {
+      renderer.render(visitor.parent, camera); // Render the exhibit scene
+    }
+  */
   controls.update();
   startAnimation();
 }
@@ -1087,14 +964,16 @@ function addVisitorMapCircle() {
   circleMap = new Mesh(
     new RingGeometry(0.1, 1, 32),
     new MeshBasicMaterial({
-      color: 0xbf011f,
+      color: 0xa2c7ff,
       side: DoubleSide,
       transparent: true,
       opacity: 1,
+      //depthTest: false // Ensures it renders on top of everything
+
     })
   );
   circleMap.position.copy(visitor.position);
-  circleMap.position.y = visitor.position.y + 10000;
+  circleMap.position.y = visitor.position.y + 10;
   circleMap.name = "circleMap";
   circleMap.rotation.x = (90 * Math.PI) / 180;
   circleMap.visible = true

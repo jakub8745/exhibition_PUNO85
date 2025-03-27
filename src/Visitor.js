@@ -30,8 +30,6 @@ export default class Visitor extends Mesh {
     this.mainScene = new Scene();
     this.mainScene.name = "mainScene";
 
-    this.exhibitScene = new Scene();
-    this.exhibitScene.name = "exhibitScene";
 
     this.deps = deps;
 
@@ -269,7 +267,7 @@ export default class Visitor extends Mesh {
 
 
     // if the visitor has fallen too far below the level reset their position to the start
-    if (this.position.y < 0) {
+    if (this.position.y < -10) {
 
 
       this.reset();
