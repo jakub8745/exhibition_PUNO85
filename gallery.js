@@ -39,7 +39,7 @@ const params = {
   canSeeGizmo: false,
   transControlsMode: "rotate",
   heightOffset: new Vector3(0, 0.93, 0),// offset the camera from the visitor
-  archiveModelPath: "/models/cipriani_exterior.glb",
+  archiveModelPath:  "/models/cipriani_interior.glb",
   enablePostProcessing: true,
   isLowEndDevice: false,//navigator.hardwareConcurrency <= 4,
   transitionAnimate: true,
@@ -348,7 +348,7 @@ function init() {
   async function loadMainScene() {
 
     const scene = visitor.parent;
-    params.archiveModelPath = "/models/cipriani_interior.glb"
+    //params.archiveModelPath = "/models/cipriani_interior.glb"
 
     const loadingElement = document.getElementById('loading');
     const progressText = document.getElementById('progress-text');
