@@ -65,11 +65,12 @@ class ModelLoader {
             // Load the main model
             const gltfScene = await this.loadGLTFModel(modelPath, this.currentModel, this.totalModels);
 
+            //gltfScene.scale.set(0.5, 0.5, 0.5);
             // Adjust floor if necessary
             this.adjustFloor(gltfScene);
 
             this.currentModel++;
-            const exhibitObjects = await this.loadGLTFModel('/models/cipriani_objects.glb', this.currentModel, this.totalModels);
+            const exhibitObjects = await this.loadGLTFModel('/models/puno85_objects.glb', this.currentModel, this.totalModels);
             this.processExhibitObjects(exhibitObjects);
             gltfScene.add(exhibitObjects);
             //}
@@ -89,6 +90,7 @@ class ModelLoader {
             this.customizeEnvironment();
 
             this.addToSceneMapRun = true;
+
 
             return collider;
 
@@ -225,6 +227,7 @@ class ModelLoader {
                 this.addToSceneMap(object);
             }
         });
+
     }
 
     addVisitorMapCircle() {
@@ -256,6 +259,8 @@ class ModelLoader {
 
 
     addToSceneMap(mesh) {
+    
+        
 
         if (this.addToSceneMapRun) {
 

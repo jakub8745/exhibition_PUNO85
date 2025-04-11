@@ -30,16 +30,16 @@ const params = {
   exhibitCollider: null,
   firstPerson: true,
   displayCollider: false, //true,
-  visualizeDepth: 10,
+  visualizeDepth: 4,
   gravity: -70,
   physicsSteps: 3,
-  visitorSpeed: 2,
+  visitorSpeed: 10,
   exposure: 1,
   gizmoVisible: false,
   canSeeGizmo: false,
   transControlsMode: "rotate",
-  heightOffset: new Vector3(0, 0.93, 0),// offset the camera from the visitor
-  archiveModelPath:  "/models/cipriani_interior.glb",
+  heightOffset: new Vector3(0, 4.5, 0),// offset the camera from the visitor
+  archiveModelPath:  "/models/puno85_interior.glb",
   enablePostProcessing: true,
   isLowEndDevice: false,//navigator.hardwareConcurrency <= 4,
   transitionAnimate: true,
@@ -219,7 +219,7 @@ function init() {
   // sceneMap
   sceneMap = new Scene();
   sceneMap.name = "sceneMap";
-  sceneMap.scale.setScalar(25);
+  sceneMap.scale.setScalar(5);
   sceneMap.rotation.x = Math.PI;
   sceneMap.rotation.y = Math.PI / 180;
   sceneMap.position.set(0, 0, 0);
@@ -262,7 +262,9 @@ function init() {
   const resetVisitor = () => {
 
     visitor.visitorVelocity.set(0, 0, 0)
-    visitor.target.set(-4.808420282897411, 10.20870486663818358, 4.438353369305904);
+    //visitor.target.set(-4.808420282897411, 10.20870486663818358, 4.438353369305904);
+    visitor.target.set(0, 10.20870486663818358, 0);
+
     rotateOrbit(180);
 
 
@@ -499,6 +501,8 @@ function init() {
           case 'Image':
             // Set image source
             popupImage.src = clickedObject.object.userData.Map;
+
+            console.log(popupImage.src);
             popupDescription.textContent = clickedObject.object.userData.opis;
 
             // Reset classes for dynamic images
