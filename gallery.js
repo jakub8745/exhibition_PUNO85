@@ -172,7 +172,10 @@ function init() {
 
   const isAppleDevice = false///Mac|iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  renderer.toneMapping = params.isLowEndDevice ? LinearToneMapping : (isAppleDevice ? AgXToneMapping : ReinhardToneMapping);
+  renderer.toneMapping = ACESFilmicToneMapping;
+
+
+  //renderer.toneMapping = params.isLowEndDevice ? LinearToneMapping : (isAppleDevice ? AgXToneMapping : ReinhardToneMapping);
   renderer.toneMappingExposure = params.exposure;
 
   document.body.appendChild(renderer.domElement);
@@ -334,7 +337,7 @@ function init() {
 
   // LOAD MODEL (environment, collider)
   const modelLoader = new ModelLoader(deps, visitor.parent);
-  const ambientLight = new AmbientLight(0x404040, 15);
+  const ambientLight = new AmbientLight(0x404040, 40);
   ambientLight.name = "ambientLight";
   visitor.parent.add(ambientLight);
   // Brightness Slider Event Listener
