@@ -154,21 +154,27 @@ class ModelLoader {
     processExhibitObjects(exhibitObjects) {
         exhibitObjects.traverse((object) => {
             if (object.isMesh) {
+             
                 object.wireframe = true;
                 object.material.transparent = true;
                 object.material.opacity = 0.0;
                 object.interactive = true;
+                
             }
         });
     }
 
     // Helper function to process scene objects
     processSceneObjects(gltfScene) {
+     
         gltfScene.traverse((object) => {
             if (object.isMesh || object.isLight) {
                 if (object.isLight) object.visible = false;
 
                 const meshType = object.userData.type;
+
+              
+
                 this.toMerge[meshType] = this.toMerge[meshType] || [];
                 this.toMerge[meshType].push(object);
             }

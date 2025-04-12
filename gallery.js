@@ -1,5 +1,6 @@
-import { WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
-import { Fog, AmbientLight, Color, BufferGeometry, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
+
+import { WebGLRenderer, Scene, PerspectiveCamera, PlaneGeometry, OrthographicCamera, Raycaster, Clock, Object3D, Mesh, Group, TextureLoader, AudioListener } from 'three'
+import { Fog, AmbientLight, Color, BufferGeometry, VideoTexture, Spherical, RingGeometry, MathUtils, MeshStandardMaterial, MeshBasicMaterial, Vector2, Vector3, DoubleSide, EquirectangularReflectionMapping, ACESFilmicToneMapping, ReinhardToneMapping, AgXToneMapping, PCFSoftShadowMap, BasicShadowMap, LinearToneMapping, SRGBColorSpace } from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
@@ -39,7 +40,7 @@ const params = {
   canSeeGizmo: false,
   transControlsMode: "rotate",
   heightOffset: new Vector3(0, 4.5, 0),// offset the camera from the visitor
-  archiveModelPath:  "/models/puno85_interior.glb",
+  archiveModelPath: "/models/puno85_interior.glb",
   enablePostProcessing: true,
   isLowEndDevice: false,//navigator.hardwareConcurrency <= 4,
   transitionAnimate: true,
@@ -333,7 +334,7 @@ function init() {
 
   // LOAD MODEL (environment, collider)
   const modelLoader = new ModelLoader(deps, visitor.parent);
-  const ambientLight = new AmbientLight(0x404040, 75);
+  const ambientLight = new AmbientLight(0x404040, 15);
   ambientLight.name = "ambientLight";
   visitor.parent.add(ambientLight);
   // Brightness Slider Event Listener
@@ -393,8 +394,63 @@ function init() {
     }
 
     rotateOrbit(180);
+
+    createVideoMeshes(visitor.parent);
+
     animate();
   }
+  function createVideoMeshes(scene) {
+    scene.traverse((object) => {
+
+      if (object.isMesh && object.userData.type === "Video") {
+        const newMeshPosition = object.position.clone();
+
+        const videoId = object.userData.elementID;
+        const video = document.getElementById(videoId);
+        video.muted = true; // Needed for autoplay policies
+
+        video.currentTime = 0.01; // Seek slightly into the video to grab the first frame
+
+     
+
+        if (!video) {
+          console.warn(`⚠️ No <video> element found with ID: ${videoId}`);
+          return;
+        }
+
+     
+
+        //video.play();
+
+        //video.addEventListener('loadedmetadata', () => {
+        const aspect = video.videoWidth / video.videoHeight;
+
+        const geometry = new PlaneGeometry(aspect, 1);
+        const texture = new VideoTexture(video);
+        texture.colorSpace = SRGBColorSpace;
+        //texture.flipY = true; // 👈 FIX horizontal flipping
+
+        const material = new MeshBasicMaterial({
+          map: texture,
+          side: DoubleSide,
+        });
+
+        const newMesh = new Mesh(geometry, material);
+        newMesh.position.set(newMeshPosition.x - 0.04, newMeshPosition.y - 0.65, newMeshPosition.z - 2.4);
+        newMesh.scale.set(-3.8, 3.6, 3.5);
+        newMesh.rotation.y = Math.PI / 2;
+        newMesh.userData.elementID= videoId;
+        newMesh.userData.type = "Video";
+
+        scene.add(newMesh);
+
+        console.log(`🎬 New video mesh added for video ID: ${videoId}`);
+        //}, { once: true });
+      }
+    });
+  }
+
+
 
 
   const rotateOrbit = (angleDegrees) => {
@@ -428,6 +484,7 @@ function init() {
     document.querySelector("#btn").classList.toggle("open");
 
     loadMainScene().catch(console.error);
+
   });
 
   textureCache = preloadTextures();
@@ -529,6 +586,11 @@ function init() {
 
           case 'Video':
             video = document.getElementById(clickedObject.object.userData.elementID);
+
+            console.log(video);
+            video.muted = false; // Needed for autoplay policies
+
+
             video.paused ? video.play() : video.pause();
             break;
 
@@ -675,13 +737,13 @@ function init() {
   });
 
   // publications
-
+/*
   document.querySelector("#books-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     let newWindow = window.open();
     newWindow.location.assign("https://zenodo.org/records/14743890");
   });
-
+*/
   // archive's map
   document.querySelector("#map-icon").addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -812,7 +874,7 @@ function init() {
         control.setMode("rotate");
         break;
       case "t":
-       // control.setMode("scale");
+        // control.setMode("scale");
         break;
       case "Escape":
         control.reset();
