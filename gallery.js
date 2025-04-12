@@ -496,7 +496,7 @@ function init() {
   // events
 
 
-
+/*
   document
     .querySelector("img#audio-on")
     .addEventListener("pointerdown", (evt) => {
@@ -510,7 +510,7 @@ function init() {
       const audioHandler = new AudioHandler();
       audioHandler.handleAudio(visitor.parent.getObjectByName(el.userData.audioToPlay));
     });
-
+*/
 
   // optimized raycaster after click
   let pressTimeout = null; // To track the long press timeout
