@@ -36,7 +36,6 @@ class ModelLoader {
 
         this.exhibits = [];
 
-        this.ktx2Loader = deps.ktx2Loader.setTranscoderPath('./libs/basis/');
 
         this.newFloor = newFloor;
         this.box = new Box3();

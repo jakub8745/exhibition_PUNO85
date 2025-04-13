@@ -614,6 +614,20 @@ li.text_in_sidebar.open canvas.open {
   background: #f9f9f9;
 }
 
+.modal-overlay.show {
+  display: flex;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
 /* Close button */
 .modal-close {
   position: absolute;
@@ -650,6 +664,7 @@ li.text_in_sidebar.open canvas.open {
   /*height: 85vh;*/
   object-fit: contain;
   border-radius: 8px;
+  max-height: 85vh;
 }
 
 /* Description */

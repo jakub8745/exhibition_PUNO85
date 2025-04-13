@@ -7,11 +7,11 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 
-import ModelLoader from './src/ModelLoader.js'
-import { AudioHandler } from './src/utils.js';
+import ModelLoader from './gallery_src/ModelLoader.js'
+import { AudioHandler } from './gallery_src/utils.js';
 
-import Visitor from './src/Visitor.js'
-import JoyStick from './src/Joystick.js';
+import Visitor from './gallery_src/Visitor.js'
+import JoyStick from './gallery_src/Joystick.js';
 
 //import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';

@@ -1,0 +1,18 @@
+{
+    "modelPath": "/models/puno85_interior.glb",
+    "backgroundTexture": "/textures/bg_lockdowns.ktx2",
+    "visitorStart": [5, 5, 5],
+    "enablePostProcessing": true,
+    "uiTheme": "dark",
+    "modules": {
+      "scene": true,
+      "visitor": true,
+      "modelLoader": true,
+      "joystick": false,
+      "labels": true
+    },
+    "audio": true,
+    "map": true,
+    "infoPanels": true
+  }
+  

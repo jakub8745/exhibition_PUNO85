@@ -197,9 +197,6 @@ export default class Visitor extends Mesh {
         );
         if (distance < capsuleInfo.radius) {
 
-
-
-
           const depth = capsuleInfo.radius - distance;
           const direction = capsulePoint.sub(triPoint).normalize();
 
@@ -255,7 +252,6 @@ export default class Visitor extends Mesh {
 
     // offset the camera 
     this.tempVector.copy(this.position).add(this.params.heightOffset);
-
     this.camera.position.sub(this.controls.target);
     this.controls.target.copy(this.tempVector);
     this.camera.position.add(this.tempVector);
@@ -275,7 +271,7 @@ export default class Visitor extends Mesh {
 
 
 
-  }
+  }s
 
   reset() {
 
