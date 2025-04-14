@@ -206,7 +206,7 @@ function init() {
 
   controls.maxPolarAngle = Math.PI;
   controls.minDistance = 1e-4;
-  controls.maxDistance = 1e-4;
+  controls.maxDistance = 1e-4;//
 
   // transform c
   control = new TransformControls(camera, renderer.domElement);

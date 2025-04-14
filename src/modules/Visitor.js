@@ -90,7 +90,11 @@ export default class Visitor extends Mesh {
   }
 
   update(delta, collider) {
-    this.visitorVelocity.y += delta * this.params.gravity;
+    if (this.visitorIsOnGround) {
+      this.visitorVelocity.y = delta * this.params.gravity;
+    } else {
+      this.visitorVelocity.y += delta * this.params.gravity;
+    }
 
     const angle = this.controls.getAzimuthalAngle();
     if (this.fwdPressed) this._move(0, 0, -1, angle, delta);
@@ -116,6 +120,12 @@ export default class Visitor extends Mesh {
     this.position.addScaledVector(this.visitorVelocity, delta);
     this.updateMatrixWorld();
     this.handleCollisions(delta, collider);
+
+    if (this.position.y < -10) {
+      console.warn('Visitor fell below floor. Resetting.');
+      this.reset();
+    }
+    
 
     const currentFloor = this.checkLocation();
     if (currentFloor && currentFloor.name !== this.lastFloorName) {
