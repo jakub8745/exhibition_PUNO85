@@ -146,21 +146,12 @@ export class PointerHandler {
 
     _moveVisitor(clickedObject) {
         const clickedPoint = clickedObject.point.clone();
-        clickedPoint.y += 0.1;
+        //clickedPoint.y += 0.1;
 
-        const distance = clickedPoint.distanceTo(this.visitor.position);
+        //const distance = clickedPoint.distanceTo(this.visitor.position);
 
-        const tweenTarget = { x: this.visitor.position.x, z: this.visitor.position.z };
-        const tween = new TWEEN.Tween(tweenTarget)
-            .to({ x: clickedPoint.x, z: clickedPoint.z }, (distance * 1000) / this.params.visitorSpeed)
-            .onUpdate(({ x, z }) => {
-                this.visitor.position.set(x, this.visitor.position.y, z);
-                this.visitor.updateMatrixWorld();
-            })
-            .onComplete(() => {
-                // optional: callback or marker toggle
-            });
-
-        tween.start();
+        this.visitor.target = clickedObject.point.clone();
+        this.visitor.isAutoMoving = true;
+        
     }
 }

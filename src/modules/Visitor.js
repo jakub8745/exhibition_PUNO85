@@ -34,6 +34,10 @@ export default class Visitor extends Mesh {
     this.verticalCollisionDetected = false;
     this.target = new Vector3(2, 10, 2);
 
+
+    this.isAutoMoving = false;
+    this.autoMoveSpeed = 5;
+
     this.capsuleInfo = {
       radius: 1.5,
       segment: new Line3(new Vector3(0, 0, 0), new Vector3(0, 1.5, 0))
@@ -94,6 +98,21 @@ export default class Visitor extends Mesh {
     if (this.lftPressed) this._move(-1, 0, 0, angle, delta);
     if (this.rgtPressed) this._move(1, 0, 0, angle, delta);
 
+    if (this.isAutoMoving && this.target) {
+      const direction = this.target.clone().sub(this.position);
+      direction.y = 0; // 🔥 Ignore vertical difference
+    
+      const distance = direction.length();
+    
+      if (distance > 0.1) {
+        direction.normalize();
+        this.position.addScaledVector(direction, this.autoMoveSpeed * delta);
+      } else {
+        this.isAutoMoving = false;
+      }
+    }
+    
+
     this.position.addScaledVector(this.visitorVelocity, delta);
     this.updateMatrixWorld();
     this.handleCollisions(delta, collider);
@@ -133,6 +152,8 @@ export default class Visitor extends Mesh {
     this.tempBox.max.addScalar(capsule.radius);
 
     this.verticalCollisionDetected = false;
+
+
 
     collider.geometry.boundsTree.shapecast({
       intersectsBounds: box => box.intersectsBox(this.tempBox),
@@ -181,15 +202,15 @@ export default class Visitor extends Mesh {
     this.visitorVelocity.set(0, 0, 0);
     console.log("this.deps.visitorEnter", this.deps.visitorEnter);
     this.position.copy(this.deps.visitorEnter || new Vector3(0, 10, 0));
-  
+
     // Optional: reset capsule target or height
     this.target.copy(this.position.clone().add(new Vector3(0, 1.5, 0)));
-  
+
     // Update controls and camera
     const offset = this.params.heightOffset || new Vector3(0, 4.5, 0);
     const target = this.position.clone().add(offset);
     this.controls.target.copy(target);
     this.camera.position.copy(target.clone().add(new Vector3(0, 0, 5))); // fallback offset
   }
-  
+
 }

@@ -110,7 +110,9 @@ export async function buildGallery(config) {
       deps.visitor.update(delta, deps.collider);
     }
 
-    TWEEN.update();
+    //TWEEN.update();
+
+    controls.update();
 
     renderer.render(scene, camera);
   }
