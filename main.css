@@ -252,7 +252,7 @@ a {
 }
 
 .sidebar {
-  display: none;
+  display: block;               /* ← change from 'none' */
   position: fixed;
   left: 0;
   height: 100%;
@@ -340,6 +340,20 @@ a {
   transform: scaleX(-1);
   left: calc(min(400px, 86vw)); /* Ensures it sticks to the edge of .sidebar */
 
+}
+
+[data-divid].active {
+  background-color: #1e3250;
+  color: white;
+}
+
+.info_sidebar {
+  display: none;
+  transition: all 0.3s ease;
+}
+
+.info_sidebar.open {
+  display: block;
 }
 
 

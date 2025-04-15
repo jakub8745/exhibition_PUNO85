@@ -2,9 +2,6 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" href="/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
 
@@ -42,59 +39,75 @@
       height: auto;
     }
   </style>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wystawa z okazji 85-lecia</title>
+
   <link rel="preload" href="main.css" as="style" onload="this.rel='stylesheet'" />
+  <link rel="stylesheet" href="main.css" />
 
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/animLogo_BluePointArt/BluePointArtLOGO_180x180.gif">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/animLogo_BluePointArt/BluePointArtLOGO_32x32.gif">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/animLogo_BluePointArt/BluePointArtLOGO_16x16.gif">
   <link rel="manifest" href="/site.webmanifest">
 
-  <meta name="description" content="Wystawa z okazji 85-lecia Polskiego Uniwersytetu na Obczyźnie w Londynie" />
-  <meta name="keywords" content="PUNO, 85-lecie, Londyn, web art 3D installation, threejs, interactive, webgl" />
-  <meta property="og:title" content="Wystawa z okazji 85-lecia Polskiego Uniwersytetu na Obczyźnie w Londynie" />
-  <meta property="og:description" content="Wystawa z okazji 85-lecia Polskiego Uniwersytetu na Obczyźnie w Londynie" />
-  <meta property="og:url" content="https://bluepointart.uk" />
-  <meta property="og:type" content="website" />
-  <meta property="og:image"
-    content="https://uploads.codesandbox.io/uploads/user/82eca14e-fd2e-4c88-9d0d-453a957b751d/JO2v-BluePointGallerySmall.gif" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@DystopiaofI" />
-  <meta name="twitter:description" content="Blue Point Art Project playground. We are building our little metaverse." />
-  <meta name="twitter:image"
-    content="https://uploads.codesandbox.io/uploads/user/82eca14e-fd2e-4c88-9d0d-453a957b751d/JO2v-BluePointGallerySmall.gif" />
-
-  <meta property="og:image:type" content="image/png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-
-  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-
-  <title>Wystawa z okazji 85-lecia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-
+  <meta name="description" content="Wystawa z okazji 85-lecia PUNO" />
+  <meta name="keywords" content="PUNO, 85-lecie, Londyn, 3D art, webgl" />
+  <meta property="og:title" content="Wystawa z okazji 85-lecia PUNO" />
+  <meta property="og:description" content="Blue Point Art Gallery installation for PUNO 85-lecie" />
+  <meta property="og:image" content="https://bluepointart.uk/preview.png" />
 </head>
 
 <body>
-  <div id="modalOverlay" class="modal-overlay hidden">
-    <div class="modal">
-      <button class="modal-close" id="closeModal">×</button>
-      <div class="modal-image-container">
-        <img src="https://via.placeholder.com/1200x800" alt="Example Image">
-      </div>
-      <div class="modal-description">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua.
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua.
-      </div>
-    </div>
+  <!-- Overlay screen -->
+  <div id="overlay">
+    <p>Wystawa z okazji 85-lecia PUNO </p>
+    <img id="myszkin" alt="Dyrektor_Myszkin" src="./textures/MyszkinBLUEPOINTART.png" />
   </div>
 
+  <div id="btn">▶</div>
+
+  <div class="sidebar">
+    <div class="logo-details">
+      <div class="logo_name" style="padding: 10px">Blue Point Art</div>
+    </div>
+    <ul class="nav-list"></ul>
+  </div>
+
+
+
+
+  <!-- Video asset -->
   <video id="animacja85" playsinline style="display:none;" preload="auto">
     <source src="/video/PUNO85_compressed_480.mp4" type="video/mp4" />
   </video>
 
-  <!-- Optional UI elements can go here -->
+  <!-- Modal popup for images -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <button class="modal-close" id="closeModal">×</button>
+      <div class="modal-image-container">
+        <img src="https://via.placeholder.com/1200x800" alt="Example Image" />
+      </div>
+      <div class="modal-description">...</div>
+    </div>
+  </div>
+
+  <!-- ✅ Sidebar for dynamic content -->
+  <div class="sidebar">
+    <div class="logo-details">
+      <div class="logo_name">Loading…</div>
+    </div>
+    <ul class="nav-list">
+      <!-- Filled dynamically from gallery_config.json -->
+    </ul>
+  </div>
+
+  <!-- Pointer Circle Hover Logic -->
+  <div id="pointerCircle"></div>
+
+  <!-- Entry Script -->
   <script type="module" src="/src/main.js"></script>
 </body>
 

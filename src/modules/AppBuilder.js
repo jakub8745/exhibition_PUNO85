@@ -7,117 +7,136 @@ import initControls from './initControls.js';
 import ModelLoader from './ModelLoader.js';
 import { createVideoMeshes } from './createVideoMeshes.js';
 import { PointerHandler } from './PointerHandler.js';
-import TWEEN from 'three/examples/jsm/libs/tween.module.js';
+import galleryConfig from '../config/gallery_config.json';
 
-
-
-import { AmbientLight } from 'three';
+import { AmbientLight, Clock, BufferGeometry, Mesh, OrthographicCamera, WebGLRenderer, Vector3 } from 'three';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
+
 import Visitor from './Visitor.js';
-import { Clock, BufferGeometry, Mesh } from 'three';
 import {
   acceleratedRaycast,
   computeBoundsTree,
-  disposeBoundsTree,
+  disposeBoundsTree
 } from 'three-mesh-bvh';
 
 
-const ktx2Loader = new KTX2Loader();
-ktx2Loader.setTranscoderPath('./libs/basis/'); // Adjust to your path
+const ktx2Loader = new KTX2Loader().setTranscoderPath('./libs/basis/');
 const clock = new Clock();
+const cameraDirection = new Vector3();
 
 
 export async function buildGallery(config) {
   const { modelPath, backgroundTexture, visitorStart, enablePostProcessing } = config;
 
-  // Patch Three.js prototypes for BVH support
+  // Patch Three.js for BVH support
   Mesh.prototype.raycast = acceleratedRaycast;
   BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
   BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
-
-
-  // Step 1: Initialize renderer
+  // Setup core
   const renderer = initRenderer();
 
-  // Step 2: Setup scene
   const scene = initScene(backgroundTexture, renderer);
+  scene.name = 'mainScene';
+  scene.add(new AmbientLight(0xffffff, 2));
 
-  // After scene is created:
-  const ambientLight = new AmbientLight(0xffffff, 2); // white, intensity 2
-  scene.add(ambientLight);
-
-  // Step 3: Setup camera and controls
   const camera = initCamera();
+
+  let bacgroundMap;
+  const rendererMap = new WebGLRenderer();
+  rendererMap.setClearColor(0x142236);
+  rendererMap.setSize(500, 500);
+
+  const sceneMap = initScene(bacgroundMap, rendererMap);
+  sceneMap.name = 'sceneMap';
+  sceneMap.add(new AmbientLight(0xffffff, 2));
+  
+  const aspect = 1; // Square map
+  const size = 40;
+  
+  const cameraMap = new OrthographicCamera(
+    -size * aspect,
+    size * aspect,
+    size,
+    -size,
+    0.1,
+    1000
+  );
+  
+  cameraMap.position.set(10, 50, 10);
+  cameraMap.up.set(0, 0, -1); // Z is "up" for minimap rotation if needed
+  cameraMap.lookAt(0, 0, 0);
+  
+
+
   const controls = initControls(camera, renderer.domElement);
 
+  // CSS2DRenderer for DOM elements
+    const css2DRenderer = new CSS2DRenderer();
+    css2DRenderer.setSize(500, 500);
+    css2DRenderer.domElement.style.position = 'absolute';
+    css2DRenderer.domElement.style.top = '0';
+    css2DRenderer.domElement.style.pointerEvents = 'none'; 
 
-
-  // Step 4: Create shared deps object
   const deps = {
     ktx2Loader,
     camera,
     controls,
     scene,
+    sceneMap,
+    cameraMap,
     renderer,
+    rendererMap,
+    css2DRenderer,
     params: {
       gravity: -70,
       visitorSpeed: 10,
-      heightOffset: { x: 0, y: 3.5, z: 0 },//y:4.5
+      heightOffset: { x: 0, y: 3.5, z: 0 },
       enablePostProcessing,
     },
   };
 
-  // after deps is prepared
   const visitor = new Visitor(deps);
-  //visitor.position.set(5, 10, 5);
+  deps.visitor = visitor;
   scene.add(visitor);
 
-  const popupCallback = setupModal(); // returns the function to show the modal
+  const popupCallback = setupModal();
+  new PointerHandler({ camera, scene, visitor, popupCallback, deps });
 
-  const pointerHandler = new PointerHandler({
-    camera,
-    scene,
-    visitor,
-    popupCallback,
-    deps
-  });
-  
-  
-
-  deps.visitor = visitor;
-
-
-  // Step 6: Load model environment
   const modelLoader = new ModelLoader(deps, scene);
   await modelLoader.loadModel(modelPath);
-
-  createVideoMeshes(scene); // ✅ add video planes after model load
-
+  createVideoMeshes(scene);
   scene.updateMatrixWorld(true);
   visitor.reset();
 
+  addSidebarListeners();
+  setupSidebarButtons(deps);
+
+  function animateMap() {
+    requestAnimationFrame(animateMap);
   
+    camera.getWorldDirection(cameraDirection);
+    const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
+    sceneMap.rotation.y = -angle + Math.PI;
+  
+    sceneMap.updateMatrixWorld();
+  
+    rendererMap.render(sceneMap, cameraMap);
+    css2DRenderer.render(sceneMap, cameraMap);
+  }
 
-  // Step 7: Start render loop
   function animate() {
-
     requestAnimationFrame(animate);
-
     const delta = clock.getDelta();
-
-    if (deps.visitor && deps.collider) {
-      deps.visitor.update(delta, deps.collider);
-    }
-
-    //TWEEN.update();
-
+    if (deps.visitor && deps.collider) deps.visitor.update(delta, deps.collider);
     controls.update();
-
     renderer.render(scene, camera);
   }
   animate();
+  animateMap();
 
+  hideOverlay();
   console.log('Gallery initialized');
 }
 
@@ -130,27 +149,111 @@ function setupModal() {
   closeBtn.addEventListener('click', () => {
     modalOverlay.classList.add('hidden');
     modalOverlay.classList.remove('show');
-
     modalImg.src = '';
     modalDesc.textContent = '';
   });
 
   return function showModal(userData) {
     if (!userData) return;
-
-    if (userData.Map) {
-      modalImg.src = userData.Map;
-    }
-    if (userData.opis) {
-      modalDesc.textContent = userData.opis;
-    }
-
+    if (userData.Map) modalImg.src = userData.Map;
+    if (userData.opis) modalDesc.textContent = userData.opis;
     modalOverlay.classList.remove('hidden');
     modalOverlay.classList.add('show');
   };
 }
 
-function popupCallback(userData) {
-  console.log('🟡 Popup triggered:', userData);
-  // TODO: Connect to modal logic here
+function buildSidebar(sidebarConfig) {
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+
+  const navList = sidebar.querySelector('.nav-list');
+  const logoDiv = sidebar.querySelector('.logo_name');
+  logoDiv.textContent = sidebarConfig.logo.text;
+
+  sidebarConfig.items.forEach(item => {
+    const li = document.createElement('li');
+    if (item.link) {
+      li.innerHTML = `
+        <a href="${item.link}" target="_blank">
+          <span class="links_name">
+            <img src="${item.icon}" />${item.label}
+          </span>
+        </a>`;
+    } else {
+      li.innerHTML = `
+        <a href="#" id="${item.id}" data-divid="${item.target}">
+          <span class="links_name">
+            <img src="${item.icon}" />${item.label}
+          </span>
+        </a>
+        <div class="info_sidebar" id="${item.target}">
+          <span class="info_text">${item.content}</span>
+        </div>`;
+    }
+    navList.appendChild(li);
+  });
+
+  sidebar.style.display = 'block';
+  sidebar.style.animation = 'fadeIn 2s forwards';
+  document.querySelector(".sidebar").classList.toggle("open");
+  document.querySelector("#btn").classList.toggle("open");
+}
+
+function addSidebarListeners() {
+  const sidebar = document.querySelector(".sidebar");
+  ["pointerdown", "mousedown", "touchstart"].forEach((type) => {
+    sidebar?.addEventListener(type, (e) => e.stopPropagation());
+  });
+
+  document.querySelector("#btn")?.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    sidebar?.classList.toggle("open");
+    document.querySelector("#btn")?.classList.toggle("open");
+  });
+}
+
+function setupSidebarButtons(deps) {
+  document.querySelectorAll("[data-divid]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const divID = btn.getAttribute("data-divid");
+      if (!divID) return;
+
+      document.querySelectorAll(".info_sidebar").forEach((div) => {
+        const isTarget = div.id === divID;
+        const isOpen = div.classList.contains("open");
+        div.classList.remove("open");
+        if (isTarget && !isOpen) div.classList.add("open");
+      });
+
+      // Dynamically insert the map renderer
+      if (divID.includes("map")) {
+        const mapDiv = document.getElementById(divID);
+        if (mapDiv && deps.sceneMap) {
+          mapDiv.innerHTML = "";
+          const canvas = deps.rendererMap.domElement;
+          canvas.style.width = "95%";
+          canvas.style.height = "95%";
+          canvas.style.display = "block";
+          canvas.style.margin = "0 auto";
+          mapDiv.appendChild(canvas);
+        }
+      }
+    });
+  });
+}
+
+
+function hideOverlay() {
+  const overlay = document.getElementById('overlay');
+  if (overlay) {
+    overlay.style.transition = 'opacity 1s ease';
+    overlay.style.opacity = 0;
+    setTimeout(() => overlay.style.display = 'none', 1000);
+  }
+}
+
+// Initial sidebar build
+if (galleryConfig.sidebar) {
+  document.addEventListener('DOMContentLoaded', () => buildSidebar(galleryConfig.sidebar));
 }

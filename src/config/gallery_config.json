@@ -1,18 +1,47 @@
 {
-    "modelPath": "/models/puno85_interior.glb",
-    "backgroundTexture": "/textures/bg_lockdowns.ktx2",
-    "visitorStart": [5, 5, 5],
-    "enablePostProcessing": true,
-    "uiTheme": "dark",
-    "modules": {
-      "scene": true,
-      "visitor": true,
-      "modelLoader": true,
-      "joystick": false,
-      "labels": true
+  "modelPath": "/models/puno85_interior.glb",
+  "backgroundTexture": "/textures/bg_lockdowns.ktx2",
+  "visitorStart": [
+    5,
+    5,
+    5
+  ],
+  "enablePostProcessing": true,
+  "uiTheme": "dark",
+  "modules": {
+    "scene": true,
+    "visitor": true,
+    "modelLoader": true,
+    "joystick": false,
+    "labels": true
+  },
+  "audio": true,
+  "map": true,
+  "infoPanels": true,
+  "sidebar": {
+    "logo": {
+      "text": "Blue Point Art"
     },
-    "audio": true,
-    "map": true,
-    "infoPanels": true
+    "items": [
+      {
+        "id": "info-icon",
+        "label": "O Wystawie",
+        "icon": "/icons/info.png",
+        "target": "info_text",
+        "content": "To jest wystawa z okazji 85-lecia Polskiego Uniwersytetu na Obczyźnie..."
+      },
+      {
+        "id": "map-icon",
+        "label": "Mapa",
+        "icon": "/icons/map.png",
+        "target": "map_text",
+        "content": "<img src='/textures/gallery_map.jpg' alt='Mapa Galerii' />"
+      },
+      {
+        "label": "Strona Główna",
+        "icon": "/icons/galleryLogoButton.png",
+        "link": "https://bluepointart.uk"
+      }
+    ]
   }
-  
+}

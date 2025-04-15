@@ -16,7 +16,6 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { StaticGeometryGenerator, MeshBVH } from 'three-mesh-bvh';
 import { PositionalAudioHelper } from 'three/examples/jsm/helpers/PositionalAudioHelper.js';
@@ -25,6 +24,8 @@ export default class ModelLoader {
   constructor(deps, scene, newFloor = null) {
     this.deps = deps;
     this.scene = scene;
+    this.sceneMap = deps.sceneMap;
+
     this.newFloor = newFloor;
     this.environment = new Group();
     this.toMerge = {};
@@ -49,7 +50,9 @@ export default class ModelLoader {
   }
 
   async loadModel(modelPath) {
-    if (this.scene.name === 'exhibitScene') this.addToSceneMapRun = false;
+    if (this.scene === this.deps.sceneMap) {
+      this.addToSceneMapRun = false;
+    }
 
     try {
       const gltfScene = await this.loadGLTFModel(modelPath, this.currentModel, this.totalModels);
@@ -168,7 +171,7 @@ export default class ModelLoader {
   customizeEnvironment() {
     this.environment.traverse(obj => {
       const type = obj.userData.type || obj.userData.name;
-      if (this.scene.name === 'mainScene' && /Wall|visitorLocation|Room/.test(type)) {
+      if (this.scene.name === 'mainScene' && /Wall|visitorLocation|Video|Image|Room/.test(type)) {
         this.addToSceneMap(obj);
       }
     });
@@ -205,7 +208,7 @@ export default class ModelLoader {
     const clone = mesh.clone();
 
     clone.material = new MeshBasicMaterial({
-      color: ['visitorLocation', 'element', 'Room'].includes(clone.userData.type) ? 0x1b689f : 0xffffff,
+      color: ['visitorLocation','Image', 'Video', 'Room'].includes(clone.userData.type) ? 0x1b689f : 0xcccccc,
       opacity: ['visitorLocation', 'element', 'Room'].includes(clone.userData.type) ? 0.8 : 1,
       transparent: true,
       depthWrite: false
