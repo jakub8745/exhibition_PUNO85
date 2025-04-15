@@ -14,17 +14,17 @@
   "license": "ISC",
   "devDependencies": {
     "three-mesh-bvh": "^0.9.0",
-    "vite": "^6.0.3",
-    "vite-plugin-static-copy": "^2.2.0"
+    "vite": "^6.2.6",
+    "vite-plugin-static-copy": "^2.3.1"
   },
   "dependencies": {
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.2",
     "nanoid": "^5.0.9",
     "picocolors": "^1.1.1",
     "postcss": "^8.4.49",
-    "rollup": "^4.27.2",
+    "rollup": "^4.40.0",
     "source-map-js": "^1.2.1",
-    "three": "^0.172.0",
+    "three": "^0.175.0",
     "vanilla-cookieconsent": "^3.0.1"
   },
   "description": ""
