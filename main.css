@@ -388,6 +388,10 @@ li.text_in_sidebar.open canvas.open {
   max-height: 50vh;
 }
 
+.info_text{
+  color: white;
+}
+
 #info_text_in_sidebar,
 #books_text_in_sidebar,
 #map_in_sidebar,

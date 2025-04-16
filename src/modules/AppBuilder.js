@@ -128,7 +128,10 @@ export async function buildGallery(config) {
 
   function animate() {
     requestAnimationFrame(animate);
-    const delta = clock.getDelta();
+    //const delta = clock.getDelta();
+    const delta = Math.min(clock.getDelta(), 0.1); // Prevent weird physics when tab is inactive
+
+
     if (deps.visitor && deps.collider) deps.visitor.update(delta, deps.collider);
     controls.update();
     renderer.render(scene, camera);
