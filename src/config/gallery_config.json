@@ -33,12 +33,12 @@
       {
         "id": "map-icon",
         "label": "Mapa",
-        "icon": "/icons/map.png",
+        "icon": "/icons/map_exhibit.png",
         "target": "map_text",
-        "content": "<img src='/textures/gallery_map.jpg' alt='Mapa Galerii' />"
+        "content": ""
       },
       {
-        "label": "Strona Główna",
+        "label": "Strona Główna Blue Point Art",
         "icon": "/icons/galleryLogoButton.png",
         "link": "https://bluepointart.uk"
       }
