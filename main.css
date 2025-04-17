@@ -240,8 +240,8 @@ canvas {
 .modal {
   position: relative;
   display: flex;
-  flex-direction: column;
-  width: 95%;
+  flex-direction: column; /* default (mobile) */
+  width: 98%;
   max-width: 90vw;
   max-height: 95vh;
   padding: 1em;
@@ -301,6 +301,61 @@ canvas {
   scrollbar-width: thin;
 }
 
+
+
+/* Layout for wide screens */
+@media (orientation: landscape) {
+  .modal {
+    flex-direction: row;
+  }
+
+  .modal-image-container {
+    flex: 3;
+    justify-content: center;
+    align-items: center;
+    max-height: 95vh;
+  }
+
+  .modal img {
+    height: 95%;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .modal-description {
+    flex: 2;
+    height: auto;
+    overflow-y: auto;
+    padding: 20px;
+  }
+}
+
+/* Layout for narrow/mobile screens */
+@media (orientation: portrait) {
+  .modal {
+    flex-direction: column;
+  }
+
+  .modal-image-container {
+    flex: 0 0 auto;
+    justify-content: center;
+    align-items: center;
+    max-height: 95vh;
+  }
+
+  .modal img {
+    width: 98%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .modal-description {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 20px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 420px) {
   .sidebar .logo-details .logo_name {
@@ -312,4 +367,15 @@ canvas {
   #btn {
     font-size: 1em;
   }
+}
+.video-play-button {
+  font-size: 1.5em;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.2em 0.6em;
+  border-radius: 50%;
+  cursor: pointer;
+  user-select: none;
+  font-family: sans-serif;
+  transition: opacity 0.3s;
 }

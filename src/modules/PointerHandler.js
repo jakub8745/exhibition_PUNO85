@@ -133,6 +133,7 @@ import {
         const { type, elementID } = userData;
   
         const videoElement = elementID ? document.getElementById(elementID) : null;
+        
   
         switch (type) {
           case 'Video':
@@ -142,9 +143,21 @@ import {
             }
             videoElement.muted = false;
             if (videoElement.paused) {
-              videoElement.play().catch(err => console.warn("Couldn't autoplay the video:", err));
+              videoElement.play().then(() => {
+                // Hide play label if it's there
+                const playLabel = clickedObject.object.getObjectByName(`playLabel_${elementID}`);
+                if (playLabel) {
+                  playLabel.visible = false;
+                }
+              }).catch(err => console.warn("Couldn't autoplay the video:", err));
             } else {
               videoElement.pause();
+          
+              // Optionally show the label again on pause
+              const playLabel = clickedObject.object.getObjectByName(`playLabel_${elementID}`);
+              if (playLabel) {
+                playLabel.visible = true;
+              }
             }
             break;
   

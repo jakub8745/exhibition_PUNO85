@@ -1,5 +1,5 @@
 // src/modules/initRenderer.js
-import { WebGLRenderer, PCFSoftShadowMap, BasicShadowMap, ACESFilmicToneMapping, SRGBColorSpace } from 'three';
+import { WebGLRenderer, PCFSoftShadowMap, ACESFilmicToneMapping, SRGBColorSpace } from 'three';
 
 export default function initRenderer() {
   const renderer = new WebGLRenderer({

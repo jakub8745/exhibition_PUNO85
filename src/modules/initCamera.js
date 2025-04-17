@@ -11,10 +11,7 @@ export default function initCamera() {
   camera.position.set(10, 6, -10);
   camera.updateProjectionMatrix();
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  });
+
 
   return camera;
 }

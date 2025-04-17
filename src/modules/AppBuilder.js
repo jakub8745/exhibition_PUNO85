@@ -5,11 +5,12 @@ import initScene from './initScene.js';
 import initCamera from './initCamera.js';
 import initControls from './initControls.js';
 import ModelLoader from './ModelLoader.js';
+import { setupResizeHandler } from './resizeHandler.js';
 import { createVideoMeshes } from './createVideoMeshes.js';
 import { PointerHandler } from './PointerHandler.js';
 import galleryConfig from '../config/gallery_config.json';
 
-import { AmbientLight, Clock, BufferGeometry, Mesh, OrthographicCamera, WebGLRenderer, Vector3 } from 'three';
+import { AmbientLight, Clock, BufferGeometry, Mesh, MeshBasicMaterial, OrthographicCamera, WebGLRenderer, RingGeometry, DoubleSide, Vector3 } from 'three';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 
@@ -42,6 +43,8 @@ export async function buildGallery(config) {
   scene.add(new AmbientLight(0xffffff, 2));
 
   const camera = initCamera();
+  setupResizeHandler(renderer, camera);
+
 
   let bacgroundMap;
   const rendererMap = new WebGLRenderer();
@@ -51,10 +54,10 @@ export async function buildGallery(config) {
   const sceneMap = initScene(bacgroundMap, rendererMap);
   sceneMap.name = 'sceneMap';
   sceneMap.add(new AmbientLight(0xffffff, 2));
-  
+
   const aspect = 1; // Square map
   const size = 40;
-  
+
   const cameraMap = new OrthographicCamera(
     -size * aspect,
     size * aspect,
@@ -63,21 +66,32 @@ export async function buildGallery(config) {
     0.1,
     1000
   );
-  
+
   cameraMap.position.set(10, 50, 10);
   cameraMap.up.set(0, 0, -1); // Z is "up" for minimap rotation if needed
   cameraMap.lookAt(0, 0, 0);
-  
+
 
 
   const controls = initControls(camera, renderer.domElement);
 
+  // For main gallery scene
+  const css2DRendererMain = new CSS2DRenderer();
+  css2DRendererMain.setSize(window.innerWidth, window.innerHeight);
+  css2DRendererMain.domElement.style.position = 'absolute';
+  css2DRendererMain.domElement.style.top = '0';
+  css2DRendererMain.domElement.style.pointerEvents = 'none';
+  document.body.appendChild(css2DRendererMain.domElement);
+
+
+
+
   // CSS2DRenderer for DOM elements
-    const css2DRenderer = new CSS2DRenderer();
-    css2DRenderer.setSize(500, 500);
-    css2DRenderer.domElement.style.position = 'absolute';
-    css2DRenderer.domElement.style.top = '0';
-    css2DRenderer.domElement.style.pointerEvents = 'none'; 
+  const css2DRenderer = new CSS2DRenderer();
+  css2DRenderer.setSize(500, 500);
+  css2DRenderer.domElement.style.position = 'absolute';
+  css2DRenderer.domElement.style.top = '0';
+  css2DRenderer.domElement.style.pointerEvents = 'none';
 
   const deps = {
     ktx2Loader,
@@ -115,16 +129,40 @@ export async function buildGallery(config) {
 
   function animateMap() {
     requestAnimationFrame(animateMap);
-  
+
     camera.getWorldDirection(cameraDirection);
     const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
     sceneMap.rotation.y = -angle + Math.PI;
-  
+
     sceneMap.updateMatrixWorld();
-  
+
     rendererMap.render(sceneMap, cameraMap);
     css2DRenderer.render(sceneMap, cameraMap);
   }
+
+  // Add visitor position indicator to sceneMap
+  const visitorMapCircle = new Mesh(
+    new RingGeometry(0.1, 1, 32),
+    new MeshBasicMaterial({
+      color: 0xa2c7ff,
+      side: DoubleSide,
+      transparent: true,
+      opacity: 1,
+      depthWrite: false // render on top
+    })
+  );
+
+  visitorMapCircle.name = "circleMap";
+  visitorMapCircle.rotation.x = Math.PI / 2;
+  visitorMapCircle.visible = true;
+
+  visitorMapCircle.material.depthTest = false;
+  visitorMapCircle.material.opacity = 0.8;
+
+
+  deps.sceneMap.add(visitorMapCircle);
+  deps.visitorMapCircle = visitorMapCircle;
+
 
   function animate() {
     requestAnimationFrame(animate);
@@ -133,7 +171,17 @@ export async function buildGallery(config) {
 
 
     if (deps.visitor && deps.collider) deps.visitor.update(delta, deps.collider);
+
+    // Sync visitor map circle with visitor position
+    if (deps.visitorMapCircle) {
+      const circlePos = deps.visitor.position.clone();
+      circlePos.y += 4; // lift above map floor
+      deps.visitorMapCircle.position.copy(circlePos);
+    }
+
     controls.update();
+
+    css2DRendererMain.render(scene, camera);
     renderer.render(scene, camera);
   }
   animate();
@@ -312,7 +360,7 @@ function setupSidebarButtons(deps) {
           const canvas = deps.rendererMap.domElement;
           targetDiv.appendChild(canvas);
         }
-        
+
       }
     });
   });
