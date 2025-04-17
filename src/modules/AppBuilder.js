@@ -191,11 +191,22 @@ export async function buildGallery(config) {
   console.log('Gallery initialized');
 }
 function setupModal() {
+  // Close sidebar when modal is shown
+  const sidebar = document.querySelector('.sidebar');
+  const btn = document.getElementById('btn');
+
+  
+  if (sidebar && sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    btn?.classList.remove('open');
+  }
+
   const modalOverlay = document.getElementById('modalOverlay');
   const modal = modalOverlay.querySelector('.modal');
   const modalImg = modalOverlay.querySelector('img');
   const modalDesc = modalOverlay.querySelector('.modal-description');
   const closeBtn = document.getElementById('closeModal');
+
 
   // Close modal on click outside
   modalOverlay.addEventListener('pointerdown', (e) => {
@@ -227,16 +238,26 @@ function setupModal() {
 
   return function showModal(userData) {
     if (!userData) return;
+  
+    // ✅ Close sidebar when modal opens
+    const sidebar = document.querySelector('.sidebar');
+    const btn = document.getElementById('btn');
+    if (sidebar?.classList.contains('open')) {
+      sidebar.classList.remove('open');
+      btn?.classList.remove('open');
+    }
+  
     if (userData.Map) modalImg.src = userData.Map;
     if (userData.opis) modalDesc.textContent = userData.opis;
-
+  
     modalOverlay.classList.remove('hidden');
     modalOverlay.classList.add('show');
-
+  
     setTimeout(() => {
       modalDesc.scrollTop = 0;
     }, 50);
   };
+  
 
 
 }
@@ -321,6 +342,18 @@ function buildSidebar(sidebarConfig) {
   sidebar.style.animation = 'fadeIn 2s forwards';
   document.querySelector(".sidebar").classList.toggle("open");
   document.querySelector("#btn").classList.toggle("open");
+
+  // Auto-open "How to Move" section on load
+  setTimeout(() => {
+    const helpBtn = document.querySelector('#help-icon');
+    const helpDiv = document.getElementById('how_to_move');
+
+    if (helpBtn && helpDiv) {
+      helpDiv.classList.add('open');
+      helpBtn.classList.add('active'); // optional: highlight the button
+    }
+  }, 500); // slight delay to ensure sidebar is rendered
+
 }
 
 function addSidebarListeners() {
