@@ -10,7 +10,18 @@ import { createVideoMeshes } from './createVideoMeshes.js';
 import { PointerHandler } from './PointerHandler.js';
 import galleryConfig from '../config/gallery_config.json';
 
-import { AmbientLight, Clock, BufferGeometry, Mesh, MeshBasicMaterial, OrthographicCamera, WebGLRenderer, RingGeometry, DoubleSide, Vector3 } from 'three';
+import {
+  AmbientLight,
+  Clock,
+  BufferGeometry,
+  Mesh,
+  MeshBasicMaterial,
+  OrthographicCamera,
+  WebGLRenderer,
+  RingGeometry,
+  DoubleSide,
+  Vector3
+} from 'three';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 
@@ -21,23 +32,18 @@ import {
   disposeBoundsTree
 } from 'three-mesh-bvh';
 
-
 const ktx2Loader = new KTX2Loader().setTranscoderPath('./libs/basis/');
 const clock = new Clock();
 const cameraDirection = new Vector3();
 
-
 export async function buildGallery(config) {
-  const { modelPath, backgroundTexture, visitorStart, enablePostProcessing } = config;
+  const { modelPath, backgroundTexture, enablePostProcessing } = config;
 
-  // Patch Three.js for BVH support
   Mesh.prototype.raycast = acceleratedRaycast;
   BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
   BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
-  // Setup core
   const renderer = initRenderer();
-
   const scene = initScene(backgroundTexture, renderer);
   scene.name = 'mainScene';
   scene.add(new AmbientLight(0xffffff, 2));
@@ -45,37 +51,22 @@ export async function buildGallery(config) {
   const camera = initCamera();
   setupResizeHandler(renderer, camera);
 
-
-  let bacgroundMap;
   const rendererMap = new WebGLRenderer();
   rendererMap.setClearColor(0x142236);
   rendererMap.setSize(500, 500);
 
-  const sceneMap = initScene(bacgroundMap, rendererMap);
+  const sceneMap = initScene(null, rendererMap);
   sceneMap.name = 'sceneMap';
   sceneMap.add(new AmbientLight(0xffffff, 2));
 
-  const aspect = 1; // Square map
   const size = 40;
-
-  const cameraMap = new OrthographicCamera(
-    -size * aspect,
-    size * aspect,
-    size,
-    -size,
-    0.1,
-    1000
-  );
-
+  const cameraMap = new OrthographicCamera(-40, 40, 40, -40, 0.1, 1000);
   cameraMap.position.set(10, 50, 10);
-  cameraMap.up.set(0, 0, -1); // Z is "up" for minimap rotation if needed
+  cameraMap.up.set(0, 0, -1);
   cameraMap.lookAt(0, 0, 0);
-
-
 
   const controls = initControls(camera, renderer.domElement);
 
-  // For main gallery scene
   const css2DRendererMain = new CSS2DRenderer();
   css2DRendererMain.setSize(window.innerWidth, window.innerHeight);
   css2DRendererMain.domElement.style.position = 'absolute';
@@ -83,10 +74,6 @@ export async function buildGallery(config) {
   css2DRendererMain.domElement.style.pointerEvents = 'none';
   document.body.appendChild(css2DRendererMain.domElement);
 
-
-
-
-  // CSS2DRenderer for DOM elements
   const css2DRenderer = new CSS2DRenderer();
   css2DRenderer.setSize(500, 500);
   css2DRenderer.domElement.style.position = 'absolute';
@@ -104,7 +91,7 @@ export async function buildGallery(config) {
     rendererMap,
     css2DRenderer,
     params: {
-      gravity: -70,
+      gravity: -10,
       visitorSpeed: 10,
       heightOffset: { x: 0, y: 3.5, z: 0 },
       enablePostProcessing,
@@ -124,82 +111,84 @@ export async function buildGallery(config) {
   scene.updateMatrixWorld(true);
   visitor.reset();
 
-  addSidebarListeners();
-  setupSidebarButtons(deps);
-
-  function animateMap() {
-    requestAnimationFrame(animateMap);
-
-    camera.getWorldDirection(cameraDirection);
-    const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
-    sceneMap.rotation.y = -angle + Math.PI;
-
-    sceneMap.updateMatrixWorld();
-
-    rendererMap.render(sceneMap, cameraMap);
-    css2DRenderer.render(sceneMap, cameraMap);
+  if (galleryConfig.sidebar) {
+    buildSidebar(galleryConfig.sidebar);
+    setupSidebarButtons(deps);
   }
+  addSidebarListeners();
 
-  // Add visitor position indicator to sceneMap
   const visitorMapCircle = new Mesh(
     new RingGeometry(0.1, 1, 32),
     new MeshBasicMaterial({
       color: 0xa2c7ff,
       side: DoubleSide,
       transparent: true,
-      opacity: 1,
-      depthWrite: false // render on top
+      opacity: 0.8,
+      depthWrite: false,
     })
   );
-
-  visitorMapCircle.name = "circleMap";
+  visitorMapCircle.name = 'circleMap';
   visitorMapCircle.rotation.x = Math.PI / 2;
   visitorMapCircle.visible = true;
-
   visitorMapCircle.material.depthTest = false;
-  visitorMapCircle.material.opacity = 0.8;
-
-
   deps.sceneMap.add(visitorMapCircle);
   deps.visitorMapCircle = visitorMapCircle;
 
-
   function animate() {
     requestAnimationFrame(animate);
-    //const delta = clock.getDelta();
-    const delta = Math.min(clock.getDelta(), 0.1); // Prevent weird physics when tab is inactive
-
-
+    const delta = Math.min(clock.getDelta(), 0.1);
     if (deps.visitor && deps.collider) deps.visitor.update(delta, deps.collider);
-
-    // Sync visitor map circle with visitor position
     if (deps.visitorMapCircle) {
       const circlePos = deps.visitor.position.clone();
-      circlePos.y += 4; // lift above map floor
+      circlePos.y += 4;
       deps.visitorMapCircle.position.copy(circlePos);
     }
-
     controls.update();
-
     css2DRendererMain.render(scene, camera);
     renderer.render(scene, camera);
   }
+
+  function animateMap() {
+    requestAnimationFrame(animateMap);
+    camera.getWorldDirection(cameraDirection);
+    const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
+    sceneMap.rotation.y = -angle + Math.PI;
+    sceneMap.updateMatrixWorld();
+    rendererMap.render(sceneMap, cameraMap);
+    css2DRenderer.render(sceneMap, cameraMap);
+  }
+
   animate();
   animateMap();
-
   hideOverlay();
-  console.log('Gallery initialized');
 }
-function setupModal() {
-  // Close sidebar when modal is shown
+
+function hideOverlay() {
+  const overlay = document.getElementById('overlay');
   const sidebar = document.querySelector('.sidebar');
   const btn = document.getElementById('btn');
 
-  
-  if (sidebar && sidebar.classList.contains('open')) {
-    sidebar.classList.remove('open');
-    btn?.classList.remove('open');
-  }
+  if (!overlay) return;
+
+  overlay.style.transition = 'opacity 1s ease';
+  overlay.style.opacity = '0';
+
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    if (sidebar && !sidebar.classList.contains('open')) {
+      sidebar.style.display = 'flex';
+      sidebar.classList.add('open');
+    }
+    if (btn && !btn.classList.contains('open')) {
+      btn.style.display = 'block';
+      btn.classList.add('open');
+    }
+  }, 1000);
+}
+
+function setupModal() {
+  const sidebar = document.querySelector('.sidebar');
+  const btn = document.getElementById('btn');
 
   const modalOverlay = document.getElementById('modalOverlay');
   const modal = modalOverlay.querySelector('.modal');
@@ -207,8 +196,6 @@ function setupModal() {
   const modalDesc = modalOverlay.querySelector('.modal-description');
   const closeBtn = document.getElementById('closeModal');
 
-
-  // Close modal on click outside
   modalOverlay.addEventListener('pointerdown', (e) => {
     if (!modal.contains(e.target)) {
       modalOverlay.classList.add('hidden');
@@ -218,11 +205,8 @@ function setupModal() {
     }
   });
 
-  // Prevent scroll inside modal from closing it
   ['touchstart', 'touchmove'].forEach(evt => {
-    modalDesc.addEventListener(evt, e => {
-      e.stopPropagation();
-    }, { passive: true });
+    modalDesc.addEventListener(evt, e => e.stopPropagation(), { passive: true });
   });
 
   closeBtn.addEventListener('click', () => {
@@ -235,32 +219,22 @@ function setupModal() {
 
   makeModalDraggable(modal);
 
-
   return function showModal(userData) {
     if (!userData) return;
-  
-    // ✅ Close sidebar when modal opens
-    const sidebar = document.querySelector('.sidebar');
-    const btn = document.getElementById('btn');
     if (sidebar?.classList.contains('open')) {
       sidebar.classList.remove('open');
       btn?.classList.remove('open');
     }
-  
     if (userData.Map) modalImg.src = userData.Map;
     if (userData.opis) modalDesc.textContent = userData.opis;
-  
     modalOverlay.classList.remove('hidden');
     modalOverlay.classList.add('show');
-  
     setTimeout(() => {
       modalDesc.scrollTop = 0;
     }, 50);
   };
-  
-
-
 }
+
 function makeModalDraggable(modal) {
   const dragHandle = modal.querySelector('.modal-image-container') || modal;
 
@@ -269,27 +243,22 @@ function makeModalDraggable(modal) {
   let offsetY = 0;
 
   const startDrag = (e) => {
-    if (e.target.closest('.modal-description')) return; // Don't drag when scrolling text
-
+    if (e.target.closest('.modal-description')) return;
     isDragging = true;
     const rect = modal.getBoundingClientRect();
     offsetX = (e.clientX || e.touches[0].clientX) - rect.left;
     offsetY = (e.clientY || e.touches[0].clientY) - rect.top;
-
     modal.style.transition = 'none';
     modal.style.position = 'absolute';
     modal.style.zIndex = 1001;
-
     document.addEventListener('pointermove', onDrag);
     document.addEventListener('pointerup', stopDrag);
   };
 
   const onDrag = (e) => {
     if (!isDragging) return;
-
     const x = (e.clientX || e.touches[0].clientX) - offsetX;
     const y = (e.clientY || e.touches[0].clientY) - offsetY;
-
     modal.style.left = `${x}px`;
     modal.style.top = `${y}px`;
     modal.style.margin = '0';
@@ -304,8 +273,6 @@ function makeModalDraggable(modal) {
   dragHandle.style.cursor = 'grab';
   dragHandle.addEventListener('pointerdown', startDrag);
 }
-
-
 
 function buildSidebar(sidebarConfig) {
   const sidebar = document.querySelector('.sidebar');
@@ -340,20 +307,17 @@ function buildSidebar(sidebarConfig) {
 
   sidebar.style.display = 'block';
   sidebar.style.animation = 'fadeIn 2s forwards';
-  document.querySelector(".sidebar").classList.toggle("open");
+  sidebar.classList.toggle('open');
   document.querySelector("#btn").classList.toggle("open");
 
-  // Auto-open "How to Move" section on load
   setTimeout(() => {
     const helpBtn = document.querySelector('#help-icon');
     const helpDiv = document.getElementById('how_to_move');
-
     if (helpBtn && helpDiv) {
       helpDiv.classList.add('open');
-      helpBtn.classList.add('active'); // optional: highlight the button
+      helpBtn.classList.add('active');
     }
-  }, 500); // slight delay to ensure sidebar is rendered
-
+  }, 500);
 }
 
 function addSidebarListeners() {
@@ -379,38 +343,18 @@ function setupSidebarButtons(deps) {
       const targetDiv = document.getElementById(divID);
       const isAlreadyOpen = targetDiv?.classList.contains("open");
 
-      // Close all .info_sidebar sections
       document.querySelectorAll(".info_sidebar").forEach(div => {
         div.classList.remove("open");
       });
 
-      // Re-open if it wasn't already open
       if (targetDiv && !isAlreadyOpen) {
         targetDiv.classList.add("open");
-
         if (divID.includes("map") && deps.sceneMap) {
           targetDiv.innerHTML = "";
           const canvas = deps.rendererMap.domElement;
           targetDiv.appendChild(canvas);
         }
-
       }
     });
   });
-}
-
-
-
-function hideOverlay() {
-  const overlay = document.getElementById('overlay');
-  if (overlay) {
-    overlay.style.transition = 'opacity 1s ease';
-    overlay.style.opacity = 0;
-    setTimeout(() => overlay.style.display = 'none', 1000);
-  }
-}
-
-// Initial sidebar build
-if (galleryConfig.sidebar) {
-  document.addEventListener('DOMContentLoaded', () => buildSidebar(galleryConfig.sidebar));
 }

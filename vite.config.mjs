@@ -17,7 +17,7 @@ export default defineConfig({
     sourcemap: process.env.NODE_ENV === 'development',
   },
   server: {
-    allowedHosts: ['dac4-46-183-110-17.ngrok-free.app'], // ✅ Allow all hosts (for ngrok)
+    allowedHosts: ['df9a-193-160-246-9.ngrok-free.app'], // ✅ Allow all hosts (for ngrok)
   },
   plugins: [
     viteStaticCopy({
