@@ -142,28 +142,101 @@ export async function buildGallery(config) {
   hideOverlay();
   console.log('Gallery initialized');
 }
-
 function setupModal() {
   const modalOverlay = document.getElementById('modalOverlay');
+  const modal = modalOverlay.querySelector('.modal');
   const modalImg = modalOverlay.querySelector('img');
   const modalDesc = modalOverlay.querySelector('.modal-description');
   const closeBtn = document.getElementById('closeModal');
+
+  // Close modal on click outside
+  modalOverlay.addEventListener('pointerdown', (e) => {
+    if (!modal.contains(e.target)) {
+      modalOverlay.classList.add('hidden');
+      modalOverlay.classList.remove('show');
+      modalImg.src = '';
+      modalDesc.textContent = '';
+    }
+  });
+
+  // Prevent scroll inside modal from closing it
+  ['touchstart', 'touchmove'].forEach(evt => {
+    modalDesc.addEventListener(evt, e => {
+      e.stopPropagation();
+    }, { passive: true });
+  });
 
   closeBtn.addEventListener('click', () => {
     modalOverlay.classList.add('hidden');
     modalOverlay.classList.remove('show');
     modalImg.src = '';
     modalDesc.textContent = '';
+    modalDesc.scrollTop = 0;
   });
+
+  makeModalDraggable(modal);
+
 
   return function showModal(userData) {
     if (!userData) return;
     if (userData.Map) modalImg.src = userData.Map;
     if (userData.opis) modalDesc.textContent = userData.opis;
+
     modalOverlay.classList.remove('hidden');
     modalOverlay.classList.add('show');
+
+    setTimeout(() => {
+      modalDesc.scrollTop = 0;
+    }, 50);
   };
+
+
 }
+function makeModalDraggable(modal) {
+  const dragHandle = modal.querySelector('.modal-image-container') || modal;
+
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  const startDrag = (e) => {
+    if (e.target.closest('.modal-description')) return; // Don't drag when scrolling text
+
+    isDragging = true;
+    const rect = modal.getBoundingClientRect();
+    offsetX = (e.clientX || e.touches[0].clientX) - rect.left;
+    offsetY = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    modal.style.transition = 'none';
+    modal.style.position = 'absolute';
+    modal.style.zIndex = 1001;
+
+    document.addEventListener('pointermove', onDrag);
+    document.addEventListener('pointerup', stopDrag);
+  };
+
+  const onDrag = (e) => {
+    if (!isDragging) return;
+
+    const x = (e.clientX || e.touches[0].clientX) - offsetX;
+    const y = (e.clientY || e.touches[0].clientY) - offsetY;
+
+    modal.style.left = `${x}px`;
+    modal.style.top = `${y}px`;
+    modal.style.margin = '0';
+  };
+
+  const stopDrag = () => {
+    isDragging = false;
+    document.removeEventListener('pointermove', onDrag);
+    document.removeEventListener('pointerup', stopDrag);
+  };
+
+  dragHandle.style.cursor = 'grab';
+  dragHandle.addEventListener('pointerdown', startDrag);
+}
+
+
 
 function buildSidebar(sidebarConfig) {
   const sidebar = document.querySelector('.sidebar');
@@ -222,29 +295,29 @@ function setupSidebarButtons(deps) {
       const divID = btn.getAttribute("data-divid");
       if (!divID) return;
 
-      document.querySelectorAll(".info_sidebar").forEach((div) => {
-        const isTarget = div.id === divID;
-        const isOpen = div.classList.contains("open");
+      const targetDiv = document.getElementById(divID);
+      const isAlreadyOpen = targetDiv?.classList.contains("open");
+
+      // Close all .info_sidebar sections
+      document.querySelectorAll(".info_sidebar").forEach(div => {
         div.classList.remove("open");
-        if (isTarget && !isOpen) div.classList.add("open");
       });
 
-      // Dynamically insert the map renderer
-      if (divID.includes("map")) {
-        const mapDiv = document.getElementById(divID);
-        if (mapDiv && deps.sceneMap) {
-          mapDiv.innerHTML = "";
+      // Re-open if it wasn't already open
+      if (targetDiv && !isAlreadyOpen) {
+        targetDiv.classList.add("open");
+
+        if (divID.includes("map") && deps.sceneMap) {
+          targetDiv.innerHTML = "";
           const canvas = deps.rendererMap.domElement;
-          canvas.style.width = "95%";
-          canvas.style.height = "95%";
-          canvas.style.display = "block";
-          canvas.style.margin = "0 auto";
-          mapDiv.appendChild(canvas);
+          targetDiv.appendChild(canvas);
         }
+        
       }
     });
   });
 }
+
 
 
 function hideOverlay() {
