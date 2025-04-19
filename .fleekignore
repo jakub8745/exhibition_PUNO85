@@ -1,0 +1,28 @@
+.git/
+dist/
+README.md
+
+
+# Log files
+*.log
+
+# Local environment files
+.env
+.env.*.local
+
+# npm / yarn / pnpm dependencies and lockfiles
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+BluePointArt_Archive.code-workspace
+
+# Vite cache
+.vite/
+
+# Editor and system-specific files
+.DS_Store
+Thumbs.db
+
+huj.txt
+
