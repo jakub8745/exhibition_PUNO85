@@ -1,31 +1,39 @@
 {
-  "name": "2scenes_vite",
+  "name": "modular_art_project",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/art-modules"
+  ],
   "main": "gallery.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "build:modules": "npm --workspace packages/art-modules run build",
+    "build:app": "vite build",
+    "build:all": "npm run build:modules && npm run build:app"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "three-mesh-bvh": "^0.9.0",
     "vite": "^6.2.6",
     "vite-plugin-static-copy": "^2.3.1"
   },
   "dependencies": {
+    "@your-org/art-modules": "file:packages/art-modules",
+    "three": "^0.175.0",
+    "three-mesh-bvh": "^0.9.0",
+    "vanilla-cookieconsent": "^3.0.1",
     "esbuild": "^0.25.2",
     "nanoid": "^5.0.9",
     "picocolors": "^1.1.1",
     "postcss": "^8.4.49",
     "rollup": "^4.40.0",
-    "source-map-js": "^1.2.1",
-    "three": "^0.175.0",
-    "vanilla-cookieconsent": "^3.0.1"
+    "source-map-js": "^1.2.1"
   },
-  "description": ""
+  "description": "Monorepo root for modular art project."
 }
