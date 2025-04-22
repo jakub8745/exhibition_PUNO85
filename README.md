@@ -1,3 +1,5 @@
-# Exhibition Cipriani - Vincenz
+THIS IS npm repo for GALLERY project [ all JS modules, no index, no css ]
 
-the branch uses archive code.
+
+after updating code in packages/modules/src/:
+npm run build:modules
