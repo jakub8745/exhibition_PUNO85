@@ -20,6 +20,7 @@ const clock = new Clock();
 const cameraDir = new Vector3();
 
 export async function buildGallery(config) {
+
   // 1. Pull everything from the user‑fetched JSON
   const {
     modelPath,
@@ -30,21 +31,14 @@ export async function buildGallery(config) {
     params
   } = config;
 
-  console.log('config', params);
 
-  // 2. Turn raw CIDs into full URLs
-  //const modelUrl = resolveIpfs(modelPath);
   const modelUrl = modelPath
   const backgroundUrl = backgroundTexture
-  //const backgroundUrl = backgroundTexture
-  // ? resolveIpfs(backgroundTexture)
-  //  : null;
 
-  console.log('modelUrl', modelUrl);
-  console.log('backgroundUrl', backgroundUrl);
 
   // 3. Three.js + BVH setup
   Mesh.prototype.raycast = acceleratedRaycast;
+  
   BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
   BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 
@@ -113,8 +107,6 @@ export async function buildGallery(config) {
   scene.updateMatrixWorld(true);
   visitor.reset();
 
-  console.log('App built!');
-
   // 11. Sidebar (if provided)
   if (sidebar) {
     buildSidebar(sidebar);
@@ -172,7 +164,7 @@ function preloadImages(imagesMap, ipfsToHttp) {
     const url = ipfsToHttp(meta.imagePath);
     const img = new Image();
     img.src = url;
-    img.onload = () => console.log('Preloaded', url);
+    //img.onload = () => console.log('Preloaded', url);
     img.onerror = () => console.warn('Failed to preload', url);
   });
 }
@@ -262,7 +254,7 @@ function setupModal(imagesMap) {
 
     // set description
     modalDesc.innerHTML = `
-      <h3>${userData.name}</h3>
+      <h3>${meta.title}</h3>
       <p>${meta.description || ''}</p>
       ${meta.author ? `<p><em>By ${meta.author}</em></p>` : ''}
     `;

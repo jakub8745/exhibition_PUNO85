@@ -18,3 +18,16 @@ const CONFIG_URL = `https://ipfs.io/ipfs/${CONFIG_CID}`;
 //
 after updating code in packages/modules/src/:
 npm run build:modules
+
+"dependencies": {
+    "@your-org/art-modules": "file:packages/art-modules",
+    "three": "^0.175.0",
+    "three-mesh-bvh": "^0.9.0",
+    "vanilla-cookieconsent": "^3.0.1",
+    "esbuild": "^0.25.2",
+    "nanoid": "^5.0.9",
+    "picocolors": "^1.1.1",
+    "postcss": "^8.4.49",
+    "rollup": "^4.40.0",
+    "source-map-js": "^1.2.1"
+  },

@@ -210,8 +210,9 @@ export default class Visitor extends Mesh {
   }
 
   reset() {
+
     this.visitorVelocity.set(0, 0, 0);
-    console.log("this.deps.visitorEnter", this.params.visitorEnter, this.params.heightOffset);
+    
     this.position.copy(this.params.visitorEnter || new Vector3(0, 10, 0));
 
     // Optional: reset capsule target or height

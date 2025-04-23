@@ -53,25 +53,17 @@ export default class ModelLoader {
 
   async loadModel(modelPath, interactivesPath) {
 
-    console.log('modelPath', modelPath, 'interactivesPath', interactivesPath);
-
     if (this.scene === this.deps.sceneMap) {
       this.addToSceneMapRun = false;
     }
 
     try {
-
-      console.log('try to load model');
       
       const gltfScene = await this.loadGLTFModel(modelPath, this.currentModel, this.totalModels);
       this.adjustFloor(gltfScene);
 
-      console.log('gltfScene', gltfScene);
-
       this.currentModel++;
       const exhibitObjects = await this.loadGLTFModel(interactivesPath, this.currentModel, this.totalModels);
-
-      console.log('exhibitObjects', exhibitObjects);
 
       this.processExhibitObjects(exhibitObjects);
       gltfScene.add(exhibitObjects);
@@ -81,9 +73,6 @@ export default class ModelLoader {
       const collider = this.createCollider();
       this.scene.add(collider);
       this.deps.collider = collider;
-
-      console.log('collider.boundsTree', collider.geometry.boundsTree);
-
 
       this.scene.add(this.environment);
       this.customizeEnvironment();
@@ -158,18 +147,11 @@ export default class ModelLoader {
 
   createCollider() {
 
-    console.log("environment", this.environment);
-
     const staticGen = new StaticGeometryGenerator(this.environment);
     staticGen.attributes = ['position'];
     const merged = staticGen.generate();
 
-
-
-
     merged.boundsTree = new MeshBVH(merged, { lazyGeneration: false });
-
-    console.log("✅ mergedGeometry boundsTree:", merged.boundsTree);
 
     const collider = new Mesh(merged);
     collider.material.wireframe = true;
