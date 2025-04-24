@@ -1,6 +1,6 @@
 {
-    "name": "@your-org/art-modules",
-    "version": "1.0.0",
+    "name": "@bluepointart/art-modules",
+    "version": "1.0.1",
     "description": "Shared 3D/Vite modules for all exhibitions",
     "main": "dist/index.cjs.js",
     "module": "dist/index.es.js",

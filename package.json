@@ -1,8 +1,16 @@
 {
-  "name": "modular_art_project",
+  "name": "modular-art-project",
   "version": "1.0.0",
+  "description": "Monorepo for our modular 3D art site",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/modular-art-project.git"
+  },
+  "author": "Jaroslaw www.bluepointart.uk",
+  "license": "MIT",
   "private": true,
   "type": "module",
+  "keywords": ["threejs", "art", "monorepo"],
   "workspaces": [
     "packages/art-modules"
   ],
@@ -16,9 +24,6 @@
     "build:app": "vite build",
     "build:all": "npm run build:modules && npm run build:app"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "vite": "^6.2.6",
     "vite-plugin-static-copy": "^2.3.1"
@@ -27,13 +32,11 @@
     "@your-org/art-modules": "file:packages/art-modules",
     "three": "^0.175.0",
     "three-mesh-bvh": "^0.9.0",
-    "vanilla-cookieconsent": "^3.0.1",
     "esbuild": "^0.25.2",
     "nanoid": "^5.0.9",
     "picocolors": "^1.1.1",
     "postcss": "^8.4.49",
     "rollup": "^4.40.0",
     "source-map-js": "^1.2.1"
-  },
-  "description": "Monorepo root for modular art project."
+  }
 }

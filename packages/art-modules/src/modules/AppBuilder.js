@@ -159,15 +159,39 @@ export async function buildGallery(config) {
 
 }
 
+function ipfsToHttp(ipfsUri, gateways = ['https://ipfs.io/ipfs', 'https://cloudflare-ipfs.com/ipfs']) {
+  if (ipfsUri.startsWith('ipfs://')) {
+    const cid = ipfsUri.slice(7);  // drop 'ipfs://'
+    
+    for (let gateway of gateways) {
+      const url = `${gateway}/${cid}`;
+      // Try fetching the URL (could be checking by making a head request or preloading the image)
+      const img = new Image();
+      img.src = url;
+      img.onerror = () => {
+        console.warn(`Failed to load from ${gateway}. Trying next gateway...`);
+      };
+      img.onload = () => {
+        console.log(`Successfully loaded from ${gateway}`);
+      };
+
+      // Return the URL immediately (this won't block the function, but images will load independently)
+      return url;
+    }
+  }
+  return ipfsUri;  // already HTTP
+}
+
 function preloadImages(imagesMap, ipfsToHttp) {
   Object.values(imagesMap).forEach(meta => {
     const url = ipfsToHttp(meta.imagePath);
     const img = new Image();
     img.src = url;
-    //img.onload = () => console.log('Preloaded', url);
+    img.onload = () => console.log('Preloaded', url);
     img.onerror = () => console.warn('Failed to preload', url);
   });
 }
+
 
 
 
@@ -194,14 +218,6 @@ function hideOverlay() {
   }, 1000);
 }
 
-// util to convert ipfs://… into an HTTP gateway URL
-function ipfsToHttp(ipfsUri, gateway = 'https://ipfs.io/ipfs') {
-  if (ipfsUri.startsWith('ipfs://')) {
-    const cid = ipfsUri.slice(7);            // drop 'ipfs://'
-    return `${gateway}/${cid}`;              // e.g. https://ipfs.io/ipfs/<cid>
-  }
-  return ipfsUri;                            // already HTTP
-}
 
 function setupModal(imagesMap) {
   // DOM references by ID

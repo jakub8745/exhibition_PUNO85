@@ -14,9 +14,6 @@ import {
   MathUtils
 } from 'three';
 
-import * as THREE from 'three';
-
-
 export class PointerHandler {
   constructor({ camera, scene, visitor, popupCallback, deps }) {
     this.camera = camera;
@@ -92,14 +89,21 @@ export class PointerHandler {
 
     if (intersects.length > 0) {
       const { point, face, object } = intersects[0];
-      this.hoverIndicator.visible = true;
-      const normalMatrix = new Matrix3().getNormalMatrix(object.matrixWorld);
-      const normal = face.normal.clone().applyMatrix3(normalMatrix).normalize();
-      this.hoverIndicator.position.copy(point).addScaledVector(normal, 0.01);
+
+      if (window.innerWidth > 768) {
+        this.hoverIndicator.visible = true;
+        const normalMatrix = new Matrix3().getNormalMatrix(object.matrixWorld);
+        const normal = face.normal.clone().applyMatrix3(normalMatrix).normalize();
+        this.hoverIndicator.position.copy(point).addScaledVector(normal, 0.01);
 
 
-      const quat = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), normal);
-      this.hoverIndicator.quaternion.copy(quat);
+        const quat = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), normal);
+        this.hoverIndicator.quaternion.copy(quat);
+      } else {
+        this.hoverIndicator.visible = false;
+        console.log('Hiding hover circle for mobile');
+
+      }
 
     } else {
       this.hoverIndicator.visible = false;
@@ -224,7 +228,7 @@ export class PointerHandler {
     // 1) Block if a wall is in the way
     const clickPoint = clickedObject.point.clone();
     const dirToClick = clickPoint.clone().sub(visitor.position).normalize();
-    const blockerRay = new THREE.Raycaster(visitor.position, dirToClick);
+    const blockerRay = new Raycaster(visitor.position, dirToClick);
     blockerRay.far = visitor.position.distanceTo(clickPoint);
     const walls = this.scene.children.filter(o => o.userData.type === 'Wall');
     if (blockerRay.intersectObjects(walls, true).length > 0) {
@@ -253,20 +257,20 @@ export class PointerHandler {
     // 4) Compute true world-space width by projecting corners onto camera-right
     const { min, max } = bbox;
     const localCorners = [
-      new THREE.Vector3(min.x, min.y, 0),
-      new THREE.Vector3(max.x, min.y, 0),
-      new THREE.Vector3(min.x, max.y, 0),
-      new THREE.Vector3(max.x, max.y, 0),
+      new Vector3(min.x, min.y, 0),
+      new Vector3(max.x, min.y, 0),
+      new Vector3(min.x, max.y, 0),
+      new Vector3(max.x, max.y, 0),
     ];
     const worldCorners = localCorners.map(c => mesh.localToWorld(c));
-    const forward = new THREE.Vector3();
+    const forward = new Vector3();
     camera.getWorldDirection(forward);
     const right = camera.up.clone().cross(forward).normalize();
     const projs = worldCorners.map(c => c.clone().sub(camera.position).dot(right));
     const worldWidth = Math.max(...projs) - Math.min(...projs);
 
     // 5) Compute horizontal FOV & required distance
-    const vFOV = THREE.MathUtils.degToRad(camera.fov);
+    const vFOV = MathUtils.degToRad(camera.fov);
     const aspect = this.renderer.domElement.clientWidth
       / this.renderer.domElement.clientHeight;
     const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
@@ -274,9 +278,9 @@ export class PointerHandler {
     const distance = (worldWidth / 2) / Math.tan(hFOV / 2) + extraOffset;
 
     // 6) Build the world-normal and back off by that distance
-    const normalMatrix = new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld);
+    const normalMatrix = new Matrix3().getNormalMatrix(mesh.matrixWorld);
     const worldNormal = localNormal.applyMatrix3(normalMatrix).normalize();
-    const centerLocal = bbox.getCenter(new THREE.Vector3());
+    const centerLocal = bbox.getCenter(new Vector3());
     const centerWorld = mesh.localToWorld(centerLocal);
     if (worldNormal.dot(camera.position.clone().sub(centerWorld)) < 0) {
       worldNormal.negate();
