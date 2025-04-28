@@ -32,6 +32,10 @@ export class PointerHandler {
     this.startY = 0;
     this.MOVE_THRESHOLD = 5;
 
+    // Hover indicator
+    this.hoverIndicator = this._createHoverCircle();
+    this.scene.add(this.hoverIndicator);
+
     // Click indicator (persistent)
     this.clickIndicator = this._createClickCircle();
     this.scene.add(this.clickIndicator);
@@ -46,26 +50,32 @@ export class PointerHandler {
     this._addListeners();
   }
 
+  _createHoverCircle() {
+    const geo = new CircleGeometry(0.1, 32);
+    const mat = new MeshBasicMaterial({
+      color: 0x459de6,
+      transparent: true,
+      opacity: 0.8,
+      side: DoubleSide,
+      depthWrite: false
+    });
+    const mesh = new Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.visible = false;
+    return mesh;
+  }
+
   _createClickCircle() {
     const geo = new CircleGeometry(0.15, 32);
     const mat = new MeshBasicMaterial({
       color: 0x459de6,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.8,
       side: DoubleSide,
       depthWrite: false
     });
     const mesh = new Mesh(geo, mat);
     mesh.visible = false;
-
-    mesh.scale.set(1, 1, 1); // INITIAL SCALE
-    mesh.onBeforeRender = () => {
-      if (!mesh.visible) return;
-      const t = performance.now() * 0.01; // time factor
-      const s = 1 + 0.3 * Math.sin(t); // amplitude
-      mesh.scale.set(s, s, s);
-    };
-
     return mesh;
   }
 
@@ -130,7 +140,7 @@ export class PointerHandler {
         videoElement.muted = false;
         if (videoElement.paused) {
           videoElement.play().catch(err => console.warn("Couldn't autoplay:", err));
-          this._moveToVideo(hit);
+          this._moveToVideo(clickedObject);
         } else {
           videoElement.pause();
         }

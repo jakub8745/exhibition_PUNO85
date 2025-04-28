@@ -6,10 +6,11 @@ import {
     Mesh,
     DoubleSide,
     SRGBColorSpace,
-    Vector3
+    Vector3,
+    TextureLoader
 } from 'three';
-import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
+const PLAY_ICON_PATH = 'https://bafybeieawhqdesjes54to4u6gmqwzvpzlp2o5ncumaqw3nfiv2mui6i6q4.ipfs.w3s.link/ButtonPlay.png';
 
 export function createVideoMeshes(scene) {
     scene.traverse(object => {
@@ -45,24 +46,31 @@ export function createVideoMeshes(scene) {
             newMesh.scale.set(-3.8, 3.6, 1);
             newMesh.rotation.y = Math.PI / 2;
 
-            // ▶️ Create a CSS label and attach
-            const labelDiv = document.createElement('div');
-            labelDiv.className = 'video-play-button';
-            labelDiv.textContent = '▶';
-            labelDiv.addEventListener('click', () => {
-                video.play();
-                labelDiv.style.display = 'none';
+            // ---- PLAY ICON SETUP ----
+            const iconSize = 0.2; // adjust to taste
+
+            const textureLoader = new TextureLoader();
+            const playIconTexture = textureLoader.load(PLAY_ICON_PATH);
+            
+            const iconGeo = new PlaneGeometry(iconSize, iconSize);
+            const iconMat = new MeshBasicMaterial({
+              map: playIconTexture,
+              transparent: true,
+              side: DoubleSide
             });
+            const iconMesh = new Mesh(iconGeo, iconMat);
+            iconMesh.name = `playIcon_${videoId}`;
+            
+            // Position icon in front of video plane
+            iconMesh.position.set(0, 0, -0.01);
+            
+            // Add the icon to your newMesh (or whatever parent object)
+            newMesh.add(iconMesh);
+            
 
-            const playLabel = new CSS2DObject(labelDiv);
-            playLabel.position.set(0, 0, 0.01); // Slightly in front of the mesh
-            playLabel.name = `playLabel_${videoId}`;
-            newMesh.add(playLabel);
-
-            // Hide when playing
-            video.addEventListener('play', () => labelDiv.style.display = 'none');
-            video.addEventListener('pause', () => labelDiv.style.display = 'block');
-            video.addEventListener('ended', () => labelDiv.style.display = 'block');
+            video.addEventListener('play', () => { iconMesh.visible = false; });
+            video.addEventListener('pause', () => { iconMesh.visible = true; });
+            video.addEventListener('ended', () => { iconMesh.visible = true; });
 
             scene.add(newMesh);
             console.log(`🎬 Added video mesh for #${videoId}`);

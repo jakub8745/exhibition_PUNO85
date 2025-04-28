@@ -1,7 +1,6 @@
 // src/modules/ModelLoader.js
 import {
   Group,
-  Box3,
   Mesh,
   MathUtils,
   AudioLoader,
@@ -10,8 +9,6 @@ import {
   EdgesGeometry,
   LineBasicMaterial,
   LineSegments,
-  RingGeometry,
-  DoubleSide
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
@@ -40,7 +37,6 @@ export default class ModelLoader {
     this.gltfLoader = new GLTFLoader(this.manager);
     this.dracoLoader = new DRACOLoader(this.manager).setDecoderPath('./libs/draco/');
 
-
     this.setupLoaders();
 
   }
@@ -58,7 +54,7 @@ export default class ModelLoader {
     }
 
     try {
-      
+
       const gltfScene = await this.loadGLTFModel(modelPath, this.currentModel, this.totalModels);
       this.adjustFloor(gltfScene);
 
@@ -100,6 +96,58 @@ export default class ModelLoader {
     gltfScene.updateMatrixWorld(true);
     return gltfScene;
   }
+
+  async loadModelFromBlob(modelBlob, interactivesBlob) {
+    if (this.scene === this.deps.sceneMap) {
+      this.addToSceneMapRun = false;
+    }
+
+    try {
+      const gltfScene = await this.loadGLTFBlob(modelBlob, this.currentModel, this.totalModels);
+      this.adjustFloor(gltfScene);
+
+      this.currentModel++;
+      const exhibitObjects = await this.loadGLTFBlob(interactivesBlob, this.currentModel, this.totalModels);
+
+      this.processExhibitObjects(exhibitObjects);
+      gltfScene.add(exhibitObjects);
+
+      this.processSceneObjects(gltfScene);
+
+      const collider = this.createCollider();
+      this.scene.add(collider);
+      this.deps.collider = collider;
+
+      this.scene.add(this.environment);
+      this.customizeEnvironment();
+
+      this.scene.updateMatrixWorld(true);
+
+      return collider;
+    } catch (err) {
+      console.error('Error loading model from blob:', err);
+      throw err;
+    }
+  }
+
+  async loadGLTFBlob(blob, currentModel, totalModels) {
+    const progressText = document.getElementById('progress-text');
+
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    const { scene: gltfScene } = await new Promise((resolve, reject) => {
+      this.gltfLoader.parse(buffer.buffer, '', resolve, reject);
+    });
+
+    if (progressText) {
+      progressText.textContent = `Loaded model ${currentModel}/${totalModels}`;
+    }
+
+    gltfScene.updateMatrixWorld(true);
+    return gltfScene;
+  }
+
 
   adjustFloor(scene) {
     scene.traverse(obj => {
@@ -203,7 +251,7 @@ export default class ModelLoader {
     const clone = mesh.clone();
 
     clone.material = new MeshBasicMaterial({
-      color: ['visitorLocation','Image', 'Video', 'Room'].includes(clone.userData.type) ? 0x1b689f : 0xcccccc,
+      color: ['visitorLocation', 'Image', 'Video', 'Room'].includes(clone.userData.type) ? 0x1b689f : 0xcccccc,
       opacity: ['visitorLocation', 'element', 'Room'].includes(clone.userData.type) ? 0.8 : 1,
       transparent: true,
       depthWrite: false
